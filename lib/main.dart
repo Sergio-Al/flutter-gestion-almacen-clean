@@ -13,11 +13,21 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Gestión de Almacén',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Gestión de Almacén')),
+        body: Center(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CreateProductPage()),
+              );
+            },
+            child: const Text('Crear Producto'),
+          ),
+        ),
       ),
-      home: CreateProductPage()
     );
   }
 }
