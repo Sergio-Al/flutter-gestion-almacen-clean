@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/stock_batch.dart';
-import '../../core/providers/repository_providers.dart';
+import '../../../domain/entities/stock_batch.dart';
+import '../../../core/providers/repository_providers.dart';
 
 // Stock Batches State Provider
 final stockBatchesProvider = FutureProvider<List<StockBatch>>((ref) async {

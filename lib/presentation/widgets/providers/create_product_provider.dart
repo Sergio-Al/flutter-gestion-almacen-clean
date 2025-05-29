@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gestion_almacen_stock/domain/usecases/product/create_product_usecase.dart';
-import '../../core/providers/usecase_providers.dart';
+import '../../../core/providers/usecase_providers.dart';
 
 // Estado para la creación de productos
 class CreateProductState {

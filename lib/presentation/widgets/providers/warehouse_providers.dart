@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/warehouse.dart';
-import '../../core/providers/repository_providers.dart';
+import '../../../domain/entities/warehouse.dart';
+import '../../../core/providers/repository_providers.dart';
 
 // Warehouses State Provider
 final warehousesProvider = FutureProvider<List<Warehouse>>((ref) async {

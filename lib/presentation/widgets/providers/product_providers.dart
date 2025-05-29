@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/product.dart';
-import '../../core/providers/repository_providers.dart';
+import '../../../domain/entities/product.dart';
+import '../../../core/providers/repository_providers.dart';
 
 // Products State Provider
 final productsProvider = FutureProvider<List<Product>>((ref) async {

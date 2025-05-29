@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/sales_order.dart';
-import '../../domain/entities/order_item.dart';
-import '../../core/providers/repository_providers.dart';
+import '../../../domain/entities/sales_order.dart';
+import '../../../domain/entities/order_item.dart';
+import '../../../core/providers/repository_providers.dart';
 
 // Sales Orders State Provider
 final salesOrdersProvider = FutureProvider<List<SalesOrder>>((ref) async {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/create_product_provider.dart';
+import '../../widgets/providers/create_product_provider.dart';
 
 class CreateProductPage extends ConsumerWidget {
   CreateProductPage({Key? key}) : super(key: key);
