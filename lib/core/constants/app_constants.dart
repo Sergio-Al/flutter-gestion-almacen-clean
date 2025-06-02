@@ -1,4 +1,7 @@
 class AppConstants {
+  // App Configuration
+  static const bool useMockData = true; // Cambiar a false para usar datos reales
+  
   // Database
   static const String databaseName = 'warehouse_management.db';
   static const int databaseVersion = 1;
@@ -9,6 +12,7 @@ class AppConstants {
   static const String stockBatchesTable = 'stock_batches';
   static const String salesOrdersTable = 'sales_orders';
   static const String orderItemsTable = 'order_items';
+  static const String usersTable = 'users';
   
   // Date Formats
   static const String dateFormat = 'yyyy-MM-dd';
