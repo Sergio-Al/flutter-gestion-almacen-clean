@@ -17,13 +17,11 @@ class QuickActionsWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Expanded(
-          child: GridView.count(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
             children: [
-              _buildActionCard(
+              _buildCircularActionButton(
                 context,
                 'Crear Producto',
                 Icons.add_shopping_cart,
@@ -35,35 +33,40 @@ class QuickActionsWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              _buildActionCard(
+              const SizedBox(width: 16),
+              _buildCircularActionButton(
                 context,
                 'Ver Productos',
                 Icons.inventory,
                 Colors.green,
                 () => _showComingSoon(context),
               ),
-              _buildActionCard(
+              const SizedBox(width: 16),
+              _buildCircularActionButton(
                 context,
                 'Gestionar Stock',
                 Icons.storage,
                 Colors.orange,
                 () => _showComingSoon(context),
               ),
-              _buildActionCard(
+              const SizedBox(width: 16),
+              _buildCircularActionButton(
                 context,
                 'Ventas',
                 Icons.point_of_sale,
                 Colors.purple,
                 () => _showComingSoon(context),
               ),
-              _buildActionCard(
+              const SizedBox(width: 16),
+              _buildCircularActionButton(
                 context,
                 'Almacenes',
                 Icons.warehouse,
                 Colors.teal,
                 () => _showComingSoon(context),
               ),
-              _buildActionCard(
+              const SizedBox(width: 16),
+              _buildCircularActionButton(
                 context,
                 'Reportes',
                 Icons.analytics,
@@ -77,54 +80,62 @@ class QuickActionsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCard(
+  Widget _buildCircularActionButton(
     BuildContext context,
     String title,
     IconData icon,
     Color color,
     VoidCallback onTap,
   ) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.05),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color,
+                  color.withOpacity(0.7),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 40,
-                color: color,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ],
+            child: Icon(
+              icon,
+              size: 32,
+              color: Colors.white,
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 80,
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 

@@ -74,29 +74,17 @@ class DashboardPage extends ConsumerWidget {
   Widget _buildDesktopLayout() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
-      child: Row(
+      child: Column(
         children: [
-          // Left column - Stats and Chart
+          const StatsCardWidget(),
+          const SizedBox(height: 20),
+          const QuickActionsWidget(),
+          const SizedBox(height: 20),
           Expanded(
-            flex: 2,
-            child: Column(
-              children: [
-                const StatsCardWidget(),
-                const SizedBox(height: 20),
-                const Expanded(
-                  child: SalesChartWidget(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 20),
-          // Right column - Actions and Activities
-          Expanded(
-            flex: 3,
             child: Row(
               children: [
                 const Expanded(
-                  child: QuickActionsWidget(),
+                  child: SalesChartWidget(),
                 ),
                 const SizedBox(width: 20),
                 const Expanded(
@@ -117,26 +105,17 @@ class DashboardPage extends ConsumerWidget {
         children: [
           const StatsCardWidget(),
           const SizedBox(height: 20),
+          const QuickActionsWidget(),
+          const SizedBox(height: 20),
           Expanded(
             child: Row(
               children: [
                 const Expanded(
-                  flex: 2,
-                  child: QuickActionsWidget(),
+                  child: SalesChartWidget(),
                 ),
                 const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    children: [
-                      const Expanded(
-                        child: SalesChartWidget(),
-                      ),
-                      const SizedBox(height: 16),
-                      const Expanded(
-                        child: RecentActivitiesWidget(),
-                      ),
-                    ],
-                  ),
+                const Expanded(
+                  child: RecentActivitiesWidget(),
                 ),
               ],
             ),
@@ -153,10 +132,7 @@ class DashboardPage extends ConsumerWidget {
         children: [
           const StatsCardWidget(),
           const SizedBox(height: 20),
-          SizedBox(
-            height: 400,
-            child: const QuickActionsWidget(),
-          ),
+          const QuickActionsWidget(),
           const SizedBox(height: 20),
           SizedBox(
             height: 300,
