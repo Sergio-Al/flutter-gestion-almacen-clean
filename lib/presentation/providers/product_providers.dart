@@ -20,6 +20,9 @@ final productByIdProvider = FutureProvider.family<Product?, String>((ref, produc
   return await repository.getProductById(productId);
 });
 
+// Get Product Provider (alias for consistency)
+final getProductProvider = productByIdProvider;
+
 // Products by Category Provider
 final productsByCategoryProvider = FutureProvider.family<List<Product>, String>((ref, categoryId) async {
   final repository = ref.watch(productRepositoryProvider);
