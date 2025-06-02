@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../products/add_edit_product_page.dart';
 import '../../products/products_list_page.dart';
 import '../../inventory/inventory_overview_page.dart';
+import '../../warehouses/warehouses_list_page.dart';
 
 class QuickActionsWidget extends StatelessWidget {
   const QuickActionsWidget({Key? key}) : super(key: key);
@@ -75,7 +76,12 @@ class QuickActionsWidget extends StatelessWidget {
                 'Almacenes',
                 Icons.warehouse,
                 Colors.teal,
-                () => _showComingSoon(context),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const WarehousesListPage(),
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               _buildCircularActionButton(
