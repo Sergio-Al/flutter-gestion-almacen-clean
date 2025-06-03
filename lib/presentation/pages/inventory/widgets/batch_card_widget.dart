@@ -39,10 +39,10 @@ class BatchCardWidget extends StatelessWidget {
     }
 
     String _getBatchStatusText() {
-      if (isExpired) return 'Expired';
-      if (isNearExpiry) return 'Near Expiry';
-      if (batch.quantity <= 0) return 'Out of Stock';
-      return 'Active';
+      if (isExpired) return 'Vencido';
+      if (isNearExpiry) return 'Próximo a Vencer';
+      if (batch.quantity <= 0) return 'Sin Stock';
+      return 'Disponible';
     }
 
     return Card(
@@ -110,7 +110,7 @@ class BatchCardWidget extends StatelessWidget {
                               children: [
                                 Icon(Icons.edit, size: 20),
                                 SizedBox(width: 8),
-                                Text('Edit'),
+                                Text('Editar'),
                               ],
                             ),
                           ),
@@ -121,7 +121,7 @@ class BatchCardWidget extends StatelessWidget {
                               children: [
                                 Icon(Icons.delete, size: 20, color: Colors.red),
                                 SizedBox(width: 8),
-                                Text('Delete', style: TextStyle(color: Colors.red)),
+                                Text('Eliminar', style: TextStyle(color: Colors.red)),
                               ],
                             ),
                           ),
@@ -136,7 +136,7 @@ class BatchCardWidget extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildInfoRow(
-                      'Quantity',
+                      'Cantidad',
                       '${batch.quantity}',
                       Icons.inventory,
                       context,
@@ -145,7 +145,7 @@ class BatchCardWidget extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildInfoRow(
-                      'Received',
+                      'Recibido',
                       DateFormatter.formatDate(batch.receivedDate),
                       Icons.event_available,
                       context,
@@ -158,7 +158,7 @@ class BatchCardWidget extends StatelessWidget {
               if (batch.expiryDate != null) ...[
                 const SizedBox(height: 8),
                 _buildInfoRow(
-                  'Expires',
+                  'Vencimiento',
                   DateFormatter.formatDate(batch.expiryDate!),
                   Icons.event,
                   context,

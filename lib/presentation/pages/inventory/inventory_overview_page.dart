@@ -37,7 +37,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inventory Overview'),
+        title: const Text('Inventario'),
         backgroundColor: theme.colorScheme.surfaceVariant,
         actions: [
           IconButton(
@@ -46,28 +46,28 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
               ref.invalidate(warehousesProvider);
             },
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: 'Actualizar Inventario',
           ),
           PopupMenuButton<String>(
             onSelected: _handleMenuSelection,
             itemBuilder: (context) => [
               const PopupMenuItem(
-                value: 'export',
+                value: 'exportar',
                 child: Row(
                   children: [
                     Icon(Icons.download),
                     SizedBox(width: 8),
-                    Text('Export Data'),
+                    Text('Exportar Datos'),
                   ],
                 ),
               ),
               const PopupMenuItem(
-                value: 'settings',
+                value: 'opciones',
                 child: Row(
                   children: [
                     Icon(Icons.settings),
                     SizedBox(width: 8),
-                    Text('Settings'),
+                    Text('Opciones'),
                   ],
                 ),
               ),
@@ -84,7 +84,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
               data: (batches) => _buildSummaryCards(batches, theme),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(
-                child: Text('Error loading summary: $error'),
+                child: Text('Resumen de errores : $error'),
               ),
             ),
           ),
@@ -107,15 +107,15 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
               tabs: const [
                 Tab(
                   icon: Icon(Icons.bar_chart),
-                  text: 'Stock Levels',
+                  text: 'Niveles de Stock',
                 ),
                 Tab(
                   icon: Icon(Icons.warning),
-                  text: 'Low Stock',
+                  text: 'Stock Bajo',
                 ),
                 Tab(
                   icon: Icon(Icons.schedule),
-                  text: 'Expiring Soon',
+                  text: 'Próximamente a Vencer',
                 ),
               ],
             ),
@@ -142,7 +142,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showQuickActionDialog(context),
         icon: const Icon(Icons.add),
-        label: const Text('Quick Action'),
+        label: const Text('Acciones Rápidas'),
       ),
     );
   }
@@ -164,7 +164,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
       children: [
         Expanded(
           child: _buildSummaryCard(
-            'Total Products',
+            'Total de Productos',
             totalProducts.toString(),
             Icons.inventory,
             Colors.blue,
@@ -174,7 +174,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
         const SizedBox(width: 12),
         Expanded(
           child: _buildSummaryCard(
-            'Low Stock',
+            'Stock Bajo',
             lowStockCount.toString(),
             Icons.warning,
             Colors.orange,
@@ -184,7 +184,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
         const SizedBox(width: 12),
         Expanded(
           child: _buildSummaryCard(
-            'Expired',
+            'Vencidos',
             expiredCount.toString(),
             Icons.error,
             Colors.red,
@@ -194,7 +194,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
         const SizedBox(width: 12),
         Expanded(
           child: _buildSummaryCard(
-            'Total Quantity',
+            'Cantidad Total',
             totalQuantity.toString(),
             Icons.inventory_2,
             Colors.green,
@@ -251,7 +251,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
       children: [
         Expanded(
           child: _buildQuickActionButton(
-            'Stock Adjustment',
+            'Ajuste de Stock',
             Icons.tune,
             () => Navigator.of(context).push(
               MaterialPageRoute(
@@ -264,7 +264,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
         const SizedBox(width: 12),
         Expanded(
           child: _buildQuickActionButton(
-            'Transfer Stock',
+            'Transferir Stock',
             Icons.swap_horiz,
             () => Navigator.of(context).push(
               MaterialPageRoute(
@@ -277,7 +277,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
         const SizedBox(width: 12),
         Expanded(
           child: _buildQuickActionButton(
-            'Batch Management',
+            'Gestión de Lotes',
             Icons.inventory_2,
             () => Navigator.of(context).push(
               MaterialPageRoute(
@@ -339,8 +339,8 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
               children: [
                 Icon(Icons.check_circle, size: 64, color: Colors.green),
                 SizedBox(height: 16),
-                Text('No low stock items found!'),
-                Text('All products have adequate stock levels.'),
+                Text('No se han encontrado productos con stock bajo.'),
+                Text('Todos los productos tienen suficiente stock.'),
               ],
             ),
           );
@@ -355,14 +355,14 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
               child: ListTile(
                 leading: const Icon(Icons.warning, color: Colors.orange),
                 title: Text(batch.batchNumber),
-                subtitle: Text('Quantity: ${batch.quantity}'),
+                subtitle: Text('Cantidad: ${batch.quantity}'),
                 trailing: ElevatedButton(
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => StockAdjustmentPage(selectedBatch: batch),
                     ),
                   ),
-                  child: const Text('Adjust'),
+                  child: const Text('Ajustar Stock'),
                 ),
               ),
             );
@@ -394,8 +394,8 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
               children: [
                 Icon(Icons.check_circle, size: 64, color: Colors.green),
                 SizedBox(height: 16),
-                Text('No products expiring soon!'),
-                Text('All products have sufficient shelf life.'),
+                Text('No se han encontrado productos próximos a vencer.'),
+                Text('Todos los productos tienen fechas de vencimiento seguras.'),
               ],
             ),
           );
@@ -415,7 +415,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
                   color: daysUntilExpiry <= 7 ? Colors.red : Colors.orange,
                 ),
                 title: Text(batch.batchNumber),
-                subtitle: Text('Expires in $daysUntilExpiry days'),
+                subtitle: Text('Expira en $daysUntilExpiry dias'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -425,7 +425,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
                           builder: (context) => StockTransferPage(selectedBatch: batch),
                         ),
                       ),
-                      child: const Text('Transfer'),
+                      child: const Text('Transferir'),
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.of(context).push(
@@ -433,7 +433,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
                           builder: (context) => StockAdjustmentPage(selectedBatch: batch),
                         ),
                       ),
-                      child: const Text('Adjust'),
+                      child: const Text('Ajustar Stock'),
                     ),
                   ],
                 ),
@@ -449,10 +449,10 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
 
   void _handleMenuSelection(String value) {
     switch (value) {
-      case 'export':
+      case 'exportar':
         _showExportDialog();
         break;
-      case 'settings':
+      case 'opciones':
         _showSettingsDialog();
         break;
     }
@@ -462,13 +462,13 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Quick Actions'),
+        title: const Text('Acciones Rápidas'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.tune),
-              title: const Text('Stock Adjustment'),
+              title: const Text('Ajuste de Stock'),
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(
@@ -480,7 +480,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
             ),
             ListTile(
               leading: const Icon(Icons.swap_horiz),
-              title: const Text('Transfer Stock'),
+              title: const Text('Transferir Stock'),
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(
@@ -492,7 +492,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
             ),
             ListTile(
               leading: const Icon(Icons.inventory_2),
-              title: const Text('Batch Management'),
+              title: const Text('Gestión de Lotes'),
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(
@@ -512,16 +512,16 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Export Data'),
-        content: const Text('Export functionality will be implemented here.'),
+        title: const Text('Exportar Datos'),
+        content: const Text('Funcionalidad de exportación aún no implementada.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Export'),
+            child: const Text('Exportar'),
           ),
         ],
       ),
@@ -532,12 +532,12 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Inventory Settings'),
-        content: const Text('Settings will be implemented here.'),
+        title: const Text('Opciones'),
+        content: const Text('Funcionalidad de opciones aún no implementada.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: const Text('Cancelar'),
           ),
         ],
       ),

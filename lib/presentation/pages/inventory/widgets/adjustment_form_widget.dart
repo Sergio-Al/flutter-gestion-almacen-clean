@@ -77,7 +77,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Stock Adjustment',
+                    'Ajuste de stock',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -95,7 +95,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
               // Product Selection (if not pre-selected)
               if (widget.selectedProduct == null) ...[
                 Text(
-                  'Product *',
+                  'Producto *',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -105,10 +105,10 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                   value: _selectedProduct,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Select a product',
+                    hintText: 'Seleccione un producto',
                     prefixIcon: Icon(Icons.inventory_2),
                   ),
-                  validator: (value) => value == null ? 'Please select a product' : null,
+                  validator: (value) => value == null ? 'Por favor seleccionan un producto' : null,
                   onChanged: (product) {
                     setState(() {
                       _selectedProduct = product;
@@ -120,7 +120,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                 const SizedBox(height: 16),
               ] else ...[
                 _buildInfoCard(
-                  'Product',
+                  'Producto',
                   widget.selectedProduct!.name,
                   Icons.inventory_2,
                   theme,
@@ -131,7 +131,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
               // Warehouse Selection (if not pre-selected)
               if (widget.selectedWarehouse == null) ...[
                 Text(
-                  'Warehouse *',
+                  'Almacen *',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -141,10 +141,10 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                   value: _selectedWarehouse,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Select a warehouse',
+                    hintText: 'Selecciona un almacen',
                     prefixIcon: Icon(Icons.warehouse),
                   ),
-                  validator: (value) => value == null ? 'Please select a warehouse' : null,
+                  validator: (value) => value == null ? 'Por favor selecciona un almacen' : null,
                   onChanged: (warehouse) {
                     setState(() {
                       _selectedWarehouse = warehouse;
@@ -155,7 +155,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                 const SizedBox(height: 16),
               ] else ...[
                 _buildInfoCard(
-                  'Warehouse',
+                  'Almacen',
                   widget.selectedWarehouse!.name,
                   Icons.warehouse,
                   theme,
@@ -166,7 +166,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
               // Batch Selection (optional)
               if (_selectedProduct != null) ...[
                 Text(
-                  'Batch (Optional)',
+                  'Lote (Opcional)',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -176,7 +176,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                   value: _selectedBatch,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Select a batch or leave empty',
+                    hintText: 'Selecciona un lote o deja en blanco',
                     prefixIcon: Icon(Icons.numbers),
                   ),
                   onChanged: (batch) {
@@ -191,7 +191,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
 
               // Adjustment Type
               Text(
-                'Adjustment Type *',
+                'Tipo de Ajuste *',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -201,8 +201,8 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                 children: [
                   Expanded(
                     child: RadioListTile<AdjustmentType>(
-                      title: const Text('Increase'),
-                      subtitle: const Text('Add stock'),
+                      title: const Text('Incrementar'),
+                      subtitle: const Text('Agregar stock'),
                       value: AdjustmentType.increase,
                       groupValue: _selectedType,
                       onChanged: (type) {
@@ -215,8 +215,8 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                   ),
                   Expanded(
                     child: RadioListTile<AdjustmentType>(
-                      title: const Text('Decrease'),
-                      subtitle: const Text('Remove stock'),
+                      title: const Text('Reducir'),
+                      subtitle: const Text('Eliminar stock'),
                       value: AdjustmentType.decrease,
                       groupValue: _selectedType,
                       onChanged: (type) {
@@ -229,8 +229,8 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                   ),
                   Expanded(
                     child: RadioListTile<AdjustmentType>(
-                      title: const Text('Set'),
-                      subtitle: const Text('Set exact amount'),
+                      title: const Text('Establecer'),
+                      subtitle: const Text('Establecer stock exacto'),
                       value: AdjustmentType.set,
                       groupValue: _selectedType,
                       onChanged: (type) {
@@ -254,7 +254,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Quantity *',
+                          'Cantidad *',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -264,7 +264,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                           controller: _quantityController,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
-                            hintText: 'Enter quantity',
+                            hintText: 'Ingrese cantidad',
                             prefixIcon: Icon(Icons.numbers),
                           ),
                           keyboardType: TextInputType.number,
@@ -273,11 +273,11 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                           ],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter quantity';
+                              return 'Por favor ingrese una cantidad';
                             }
                             final quantity = int.tryParse(value);
                             if (quantity == null || quantity <= 0) {
-                              return 'Please enter a valid quantity';
+                              return 'Por favor ingrese una cantidad válida mayor a 0';
                             }
                             return null;
                           },
@@ -291,7 +291,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Current Stock',
+                          'Stock Actual',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -320,7 +320,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
 
               // Reason Input
               Text(
-                'Reason *',
+                'Razon *',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -330,12 +330,12 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                 controller: _reasonController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  hintText: 'Enter reason for adjustment',
+                  hintText: 'Ingrese la razon del ajuste',
                   prefixIcon: Icon(Icons.help_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a reason';
+                    return 'Por favor ingrese una razon para el ajuste';
                   }
                   return null;
                 },
@@ -344,7 +344,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
 
               // Notes Input
               Text(
-                'Notes (Optional)',
+                'Notas (Opcional)',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -354,7 +354,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                 controller: _notesController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  hintText: 'Additional notes...',
+                  hintText: 'Notas adicionales...',
                   prefixIcon: Icon(Icons.note),
                 ),
                 maxLines: 3,
@@ -368,7 +368,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _isLoading ? null : widget.onCancel,
-                        child: const Text('Cancel'),
+                        child: const Text('Cancelar'),
                       ),
                     ),
                   if (widget.onCancel != null) const SizedBox(width: 16),
@@ -381,7 +381,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Submit Adjustment'),
+                          : const Text('Guardar Ajuste'),
                     ),
                   ),
                 ],

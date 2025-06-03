@@ -80,7 +80,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Stock Transfer',
+                    'Transferencia de Stock',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -98,7 +98,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
               // Product Selection (if not pre-selected)
               if (widget.selectedProduct == null) ...[
                 Text(
-                  'Product *',
+                  'Producto *',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -108,10 +108,10 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                   value: _selectedProduct,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Select a product',
+                    hintText: 'Seleccione un producto',
                     prefixIcon: Icon(Icons.inventory_2),
                   ),
-                  validator: (value) => value == null ? 'Please select a product' : null,
+                  validator: (value) => value == null ? 'Por favor selecciona un producto' : null,
                   onChanged: (product) {
                     setState(() {
                       _selectedProduct = product;
@@ -124,7 +124,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                 const SizedBox(height: 16),
               ] else ...[
                 _buildInfoCard(
-                  'Product',
+                  'Producto',
                   widget.selectedProduct!.name,
                   Icons.inventory_2,
                   theme,
@@ -141,7 +141,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'From Warehouse *',
+                          'Almacen origen *',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -152,10 +152,10 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                             value: _fromWarehouse,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
-                              hintText: 'Select source',
+                              hintText: 'Seleccione origen',
                               prefixIcon: Icon(Icons.warehouse),
                             ),
-                            validator: (value) => value == null ? 'Please select source warehouse' : null,
+                            validator: (value) => value == null ? 'Por favor selecciona un almacen origen' : null,
                             onChanged: (warehouse) {
                               setState(() {
                                 _fromWarehouse = warehouse;
@@ -214,7 +214,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'To Warehouse *',
+                          'A Almacen *',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -225,13 +225,13 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                             value: _toWarehouse,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
-                              hintText: 'Select destination',
+                              hintText: 'Seleccione destino',
                               prefixIcon: Icon(Icons.warehouse_outlined),
                             ),
                             validator: (value) {
-                              if (value == null) return 'Please select destination warehouse';
+                              if (value == null) return 'Por favor selecciona un almacen destino';
                               if (value.id == _fromWarehouse?.id) {
-                                return 'Source and destination cannot be the same';
+                                return 'No puedes transferir al mismo almacen de origen';
                               }
                               return null;
                             },
@@ -275,7 +275,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
               // Batch Selection (optional)
               if (_selectedProduct != null) ...[
                 Text(
-                  'Batch (Optional)',
+                  'Lote de Stock (opcional)',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -285,7 +285,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                   value: _selectedBatch,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Select a batch or leave empty',
+                    hintText: 'Seleccione un lote o deje en blanco',
                     prefixIcon: Icon(Icons.numbers),
                   ),
                   onChanged: (batch) {
@@ -308,7 +308,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Transfer Quantity *',
+                          'Transferir cantidad *',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -318,9 +318,9 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                           controller: _quantityController,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
-                            hintText: 'Enter quantity',
+                            hintText: 'Ingrese cantidad a transferir',
                             prefixIcon: Icon(Icons.numbers),
-                            suffixText: 'units',
+                            suffixText: 'unidades',
                           ),
                           keyboardType: TextInputType.number,
                           inputFormatters: [
@@ -328,14 +328,14 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                           ],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter quantity';
+                              return 'Por favor ingrese una cantidad';
                             }
                             final quantity = int.tryParse(value);
                             if (quantity == null || quantity <= 0) {
-                              return 'Please enter a valid quantity';
+                              return 'Por favor ingrese una cantidad válida';
                             }
                             if (quantity > _availableStock) {
-                              return 'Cannot transfer more than available stock';
+                              return 'No puede transferir más de $_availableStock unidades';
                             }
                             return null;
                           },
@@ -349,7 +349,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Available Stock',
+                          'Stock disponible',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -366,7 +366,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                                 : Colors.orange.withOpacity(0.1),
                           ),
                           child: Text(
-                            '$_availableStock units',
+                            '$_availableStock unidades',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: _availableStock > 0 ? Colors.green : Colors.orange,
@@ -383,7 +383,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
               // Quick Quantity Buttons
               if (_availableStock > 0) ...[
                 Text(
-                  'Quick Select',
+                  'Cantidad rápida',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -410,7 +410,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
 
               // Reason Input
               Text(
-                'Transfer Reason *',
+                'Razon de transferencia *',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -420,12 +420,12 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                 controller: _reasonController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  hintText: 'Enter reason for transfer',
+                  hintText: 'Ingrese la razón de la transferencia',
                   prefixIcon: Icon(Icons.help_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a reason';
+                    return 'Por favor ingrese una razón para la transferencia';
                   }
                   return null;
                 },
@@ -434,7 +434,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
 
               // Notes Input
               Text(
-                'Additional Notes (Optional)',
+                'Notas adicionales (opcional)',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -444,7 +444,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                 controller: _notesController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  hintText: 'Additional notes about the transfer...',
+                  hintText: 'Notas adicionales sobre la transferencia...',
                   prefixIcon: Icon(Icons.note),
                 ),
                 maxLines: 3,
@@ -458,7 +458,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _isLoading ? null : widget.onCancel,
-                        child: const Text('Cancel'),
+                        child: const Text('Cancelar'),
                       ),
                     ),
                   if (widget.onCancel != null) const SizedBox(width: 16),
@@ -471,7 +471,7 @@ class _TransferFormWidgetState extends State<TransferFormWidget> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Transfer Stock'),
+                          : const Text('Transferir'),
                     ),
                   ),
                 ],

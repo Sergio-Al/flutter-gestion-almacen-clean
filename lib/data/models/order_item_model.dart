@@ -5,9 +5,11 @@ class OrderItemModel extends OrderItem {
     required super.id,
     required super.orderId,
     required super.productId,
+    required super.productName,
+    super.productDescription,
     required super.quantity,
     required super.unitPrice,
-    required super.batchId,
+    super.batchId,
   });
 
   factory OrderItemModel.fromMap(Map<String, dynamic> map) {
@@ -15,9 +17,11 @@ class OrderItemModel extends OrderItem {
       id: map['id'] as String,
       orderId: map['order_id'] as String,
       productId: map['product_id'] as String,
+      productName: map['product_name'] as String,
+      productDescription: map['product_description'] as String?,
       quantity: map['quantity'] as int,
       unitPrice: (map['unit_price'] as num).toDouble(),
-      batchId: map['batch_id'] as String,
+      batchId: map['batch_id'] as String?,
     );
   }
 
@@ -26,6 +30,8 @@ class OrderItemModel extends OrderItem {
       'id': id,
       'order_id': orderId,
       'product_id': productId,
+      'product_name': productName,
+      'product_description': productDescription,
       'quantity': quantity,
       'unit_price': unitPrice,
       'batch_id': batchId,
@@ -37,6 +43,8 @@ class OrderItemModel extends OrderItem {
       id: orderItem.id,
       orderId: orderItem.orderId,
       productId: orderItem.productId,
+      productName: orderItem.productName,
+      productDescription: orderItem.productDescription,
       quantity: orderItem.quantity,
       unitPrice: orderItem.unitPrice,
       batchId: orderItem.batchId,

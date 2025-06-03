@@ -55,18 +55,18 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stock Transfer'),
+        title: const Text('Transferencia de Stock'),
         backgroundColor: theme.colorScheme.surfaceVariant,
         actions: [
           IconButton(
             onPressed: () => _showTransferHistory(context),
             icon: const Icon(Icons.history),
-            tooltip: 'Transfer History',
+            tooltip: 'Historial de Transferencias',
           ),
           IconButton(
             onPressed: () => _showBulkTransferDialog(context),
             icon: const Icon(Icons.multiple_stop),
-            tooltip: 'Bulk Transfer',
+            tooltip: 'Transferencia Masiva',
           ),
         ],
         bottom: TabBar(
@@ -74,15 +74,15 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
           tabs: const [
             Tab(
               icon: Icon(Icons.swap_horiz),
-              text: 'New Transfer',
+              text: 'Nueva Transferencia',
             ),
             Tab(
               icon: Icon(Icons.inventory),
-              text: 'Select Stock',
+              text: 'Seleccionar Stock',
             ),
             Tab(
               icon: Icon(Icons.track_changes),
-              text: 'Track Transfers',
+              text: 'Seguir Transferencias',
             ),
           ],
         ),
@@ -147,7 +147,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Select Warehouses',
+                  'Seleccionar Almacenes',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -164,7 +164,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'From Warehouse',
+                        'Almacén Origen',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -174,7 +174,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                         value: _selectedFromWarehouse,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          hintText: 'Select source',
+                          hintText: 'Seleccionar origen',
                           prefixIcon: Icon(Icons.warehouse),
                         ),
                         onChanged: (warehouse) {
@@ -217,7 +217,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'To Warehouse',
+                        'Almacén Destino',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -227,7 +227,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                         value: _selectedToWarehouse,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          hintText: 'Select destination',
+                          hintText: 'Seleccionar destino',
                           prefixIcon: Icon(Icons.warehouse_outlined),
                         ),
                         onChanged: (warehouse) {
@@ -251,7 +251,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
         ),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Error loading warehouses: $error')),
+      error: (error, stack) => Center(child: Text('Error cargando almacenes: $error')),
     );
   }
 
@@ -268,7 +268,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
               TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search stock batches...',
+                  hintText: 'Buscar lotes de stock...',
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -295,7 +295,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
               Row(
                 children: [
                   FilterChip(
-                    label: const Text('High Stock'),
+                    label: const Text('Stock Alto'),
                     selected: false,
                     onSelected: (selected) {
                       // Implement filter logic
@@ -303,7 +303,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                   ),
                   const SizedBox(width: 8),
                   FilterChip(
-                    label: const Text('Low Stock'),
+                    label: const Text('Stock Bajo'),
                     selected: false,
                     onSelected: (selected) {
                       // Implement filter logic
@@ -311,7 +311,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                   ),
                   const SizedBox(width: 8),
                   FilterChip(
-                    label: const Text('Expiring Soon'),
+                    label: const Text('Próximo a Vencer'),
                     selected: false,
                     onSelected: (selected) {
                       // Implement filter logic
@@ -345,15 +345,15 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                       const SizedBox(height: 16),
                       Text(
                         _searchQuery.isEmpty 
-                            ? 'No stock batches found'
-                            : 'No batches match your search',
+                            ? 'No se encontraron lotes de stock'
+                            : 'No hay lotes que coincidan con su búsqueda',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _searchQuery.isEmpty
-                            ? 'Add some stock to start transferring'
-                            : 'Try adjusting your search terms',
+                            ? 'Agregue stock para comenzar a transferir'
+                            : 'Intente ajustar sus términos de búsqueda',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -381,11 +381,11 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                 children: [
                   const Icon(Icons.error, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text('Error loading stock: $error'),
+                  Text('Error cargando stock: $error'),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => ref.invalidate(stockBatchesProvider),
-                    child: const Text('Retry'),
+                    child: const Text('Reintentar'),
                   ),
                 ],
               ),
@@ -421,13 +421,13 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                 color: Colors.white,
               ),
             ),
-            title: Text('Transfer #${1001 + index}'),
+            title: Text('Transferencia #${1001 + index}'),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Batch: #${2001 + index}'),
-                Text('Warehouse A → Warehouse B'),
-                Text('Quantity: ${(index + 1) * 25} units'),
+                Text('Lote: #${2001 + index}'),
+                Text('Almacén A → Almacén B'),
+                Text('Cantidad: ${(index + 1) * 25} unidades'),
               ],
             ),
             trailing: Column(
@@ -435,10 +435,10 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
               children: [
                 Text(
                   isCompleted 
-                      ? 'Completed' 
+                      ? 'Completada' 
                       : isPending 
-                          ? 'In Transit' 
-                          : 'Failed',
+                          ? 'En Tránsito' 
+                          : 'Fallida',
                   style: TextStyle(
                     color: isCompleted 
                         ? Colors.green 
@@ -448,7 +448,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text('${index + 1}h ago'),
+                Text('Hace ${index + 1}h'),
               ],
             ),
             onTap: () => _showTransferDetails(index),
@@ -500,7 +500,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
             children: [
               CircularProgressIndicator(),
               SizedBox(width: 16),
-              Text('Processing transfer...'),
+              Text('Procesando transferencia...'),
             ],
           ),
         ),
@@ -520,7 +520,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
               children: [
                 Icon(Icons.check_circle, color: Colors.white),
                 SizedBox(width: 8),
-                Text('Stock transfer initiated successfully!'),
+                Text('¡Transferencia de stock iniciada exitosamente!'),
               ],
             ),
             backgroundColor: Colors.green,
@@ -546,7 +546,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
               children: [
                 const Icon(Icons.error, color: Colors.white),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Transfer failed: $error')),
+                Expanded(child: Text('Transferencia fallida: $error')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -561,23 +561,23 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Transfer #${1001 + index}'),
+        title: Text('Transferencia #${1001 + index}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('Batch:', '#${2001 + index}'),
-            _buildDetailRow('From:', 'Warehouse A'),
-            _buildDetailRow('To:', 'Warehouse B'),
-            _buildDetailRow('Quantity:', '${(index + 1) * 25} units'),
-            _buildDetailRow('Status:', index < 5 ? 'Completed' : 'In Transit'),
-            _buildDetailRow('Initiated:', '${index + 1} hours ago'),
+            _buildDetailRow('Lote:', '#${2001 + index}'),
+            _buildDetailRow('Desde:', 'Almacén A'),
+            _buildDetailRow('Hacia:', 'Almacén B'),
+            _buildDetailRow('Cantidad:', '${(index + 1) * 25} unidades'),
+            _buildDetailRow('Estado:', index < 5 ? 'Completada' : 'En Tránsito'),
+            _buildDetailRow('Iniciada:', 'Hace ${index + 1} horas'),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: const Text('Cerrar'),
           ),
           if (index >= 5)
             ElevatedButton(
@@ -585,7 +585,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                 Navigator.of(context).pop();
                 // Implement cancel transfer logic
               },
-              child: const Text('Cancel Transfer'),
+              child: const Text('Cancelar Transferencia'),
             ),
         ],
       ),
@@ -641,7 +641,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                   const Icon(Icons.history),
                   const SizedBox(width: 8),
                   const Text(
-                    'Transfer History',
+                    'Historial de Transferencias',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -667,9 +667,9 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                         backgroundColor: index % 3 == 0 ? Colors.green : Colors.blue,
                         child: const Icon(Icons.swap_horiz, color: Colors.white),
                       ),
-                      title: Text('Transfer #${1001 + index}'),
-                      subtitle: Text('Warehouse A → Warehouse B\n${(index + 1) * 10} units'),
-                      trailing: Text('${index + 1}d ago'),
+                      title: Text('Transferencia #${1001 + index}'),
+                      subtitle: Text('Almacén A → Almacén B\n${(index + 1) * 10} unidades'),
+                      trailing: Text('Hace ${index + 1}d'),
                       isThreeLine: true,
                     ),
                   ),
@@ -686,16 +686,16 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Bulk Transfer'),
-        content: const Text('Bulk transfer functionality will be implemented here.'),
+        title: const Text('Transferencia Masiva'),
+        content: const Text('La funcionalidad de transferencia masiva se implementará aquí.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Start Bulk Transfer'),
+            child: const Text('Iniciar Transferencia Masiva'),
           ),
         ],
       ),

@@ -1,43 +1,66 @@
 import '../../domain/entities/sales_order.dart';
+import 'order_item_model.dart';
 
 class SalesOrderModel extends SalesOrder {
   const SalesOrderModel({
     required super.id,
+    required super.customerId,
     required super.customerName,
-    required super.orderDate,
+    required super.date,
     required super.status,
-    required super.totalAmount,
+    required super.items,
+    required super.total,
+    super.notes,
+    required super.createdAt,
+    required super.updatedAt,
   });
 
   factory SalesOrderModel.fromMap(Map<String, dynamic> map) {
     return SalesOrderModel(
       id: map['id'] as String,
+      customerId: map['customer_id'] as String,
       customerName: map['customer_name'] as String,
-      orderDate: DateTime.parse(map['order_date'] as String),
+      date: DateTime.parse(map['date'] as String),
       status: OrderStatus.values.firstWhere(
         (e) => e.name == map['status'] as String,
       ),
-      totalAmount: (map['total_amount'] as num).toDouble(),
+      items: (map['items'] as List<dynamic>?)
+          ?.map((item) => OrderItemModel.fromMap(item as Map<String, dynamic>))
+          .toList() ?? [],
+      total: (map['total'] as num).toDouble(),
+      notes: map['notes'] as String?,
+      createdAt: DateTime.parse(map['created_at'] as String),
+      updatedAt: DateTime.parse(map['updated_at'] as String),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'customer_id': customerId,
       'customer_name': customerName,
-      'order_date': orderDate.toIso8601String(),
+      'date': date.toIso8601String(),
       'status': status.name,
-      'total_amount': totalAmount,
+      'items': items.map((item) => (item as OrderItemModel).toMap()).toList(),
+      'total': total,
+      'notes': notes,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
   }
 
   factory SalesOrderModel.fromEntity(SalesOrder salesOrder) {
     return SalesOrderModel(
       id: salesOrder.id,
+      customerId: salesOrder.customerId,
       customerName: salesOrder.customerName,
-      orderDate: salesOrder.orderDate,
+      date: salesOrder.date,
       status: salesOrder.status,
-      totalAmount: salesOrder.totalAmount,
+      items: salesOrder.items,
+      total: salesOrder.total,
+      notes: salesOrder.notes,
+      createdAt: salesOrder.createdAt,
+      updatedAt: salesOrder.updatedAt,
     );
   }
 }

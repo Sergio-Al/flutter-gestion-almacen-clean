@@ -48,13 +48,13 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stock Adjustment'),
+        title: const Text('Ajuste de Inventario'),
         backgroundColor: theme.colorScheme.surfaceVariant,
         actions: [
           IconButton(
             onPressed: () => _showAdjustmentHistory(context),
             icon: const Icon(Icons.history),
-            tooltip: 'Adjustment History',
+            tooltip: 'Historial de Ajustes',
           ),
         ],
         bottom: TabBar(
@@ -62,11 +62,11 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
           tabs: const [
             Tab(
               icon: Icon(Icons.tune),
-              text: 'New Adjustment',
+              text: 'Nuevo Ajuste',
             ),
             Tab(
               icon: Icon(Icons.inventory),
-              text: 'Select Batch',
+              text: 'Seleccionar Lote',
             ),
           ],
         ),
@@ -107,7 +107,7 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search batches...',
+              hintText: 'Buscar lotes...',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
@@ -152,15 +152,15 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
                       const SizedBox(height: 16),
                       Text(
                         _searchQuery.isEmpty 
-                            ? 'No batches found'
-                            : 'No batches match your search',
+                            ? 'No se han encontrado lotes'
+                            : 'No se encontraron lotes que coincidan con "$_searchQuery"',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _searchQuery.isEmpty
-                            ? 'Add some products to start managing batches'
-                            : 'Try adjusting your search terms',
+                            ? 'Agregue algunos productos para comenzar'
+                            : 'Intente con otra búsqueda',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -189,11 +189,11 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
                 children: [
                   const Icon(Icons.error, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text('Error loading batches: $error'),
+                  Text('Error cargando lotes: $error'),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => ref.invalidate(stockBatchesProvider),
-                    child: const Text('Retry'),
+                    child: const Text('Reintentar'),
                   ),
                 ],
               ),
@@ -244,7 +244,7 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
             children: [
               CircularProgressIndicator(),
               SizedBox(width: 16),
-              Text('Processing adjustment...'),
+              Text('Procesando ajuste...'),
             ],
           ),
         ),
@@ -264,7 +264,7 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
               children: [
                 Icon(Icons.check_circle, color: Colors.white),
                 SizedBox(width: 8),
-                Text('Stock adjustment completed successfully!'),
+                Text('Ajuste realizado con éxito'),
               ],
             ),
             backgroundColor: Colors.green,
@@ -307,16 +307,16 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Batch'),
-        content: Text('Edit functionality for batch ${batch.batchNumber} will be implemented here.'),
+        title: const Text('Editar Lote'),
+        content: Text('Fucionalidad para editar lote ${batch.batchNumber} sera implementada aqui.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Save'),
+            child: const Text('Guardar'),
           ),
         ],
       ),
@@ -354,7 +354,7 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
                   const Icon(Icons.history),
                   const SizedBox(width: 8),
                   const Text(
-                    'Adjustment History',
+                    'Historial de Ajustes',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -383,9 +383,9 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
                           color: Colors.white,
                         ),
                       ),
-                      title: Text('Batch #${index + 1001}'),
-                      subtitle: Text('${index % 2 == 0 ? 'Increased' : 'Decreased'} by ${(index + 1) * 5} units'),
-                      trailing: Text('${index + 1}h ago'),
+                      title: Text('Lote #${index + 1001}'),
+                      subtitle: Text('${index % 2 == 0 ? 'Incrementado' : 'Reducido'} por ${(index + 1) * 5} unidades'),
+                      trailing: Text('hace ${index + 1}h '),
                     ),
                   ),
                 ),
