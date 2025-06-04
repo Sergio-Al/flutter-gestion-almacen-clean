@@ -24,28 +24,42 @@ class DashboardPage extends ConsumerWidget {
                 _logout(context, ref);
               }
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'profile',
-                child: Row(
-                  children: [
-                    const Icon(Icons.person),
-                    const SizedBox(width: 8),
-                    Text(currentUser?.name ?? 'Usuario'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout),
-                    SizedBox(width: 8),
-                    Text('Cerrar Sesión'),
-                  ],
-                ),
-              ),
-            ],
+            itemBuilder:
+                (context) => [
+                  PopupMenuItem(
+                    value: 'profile',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.person),
+                        const SizedBox(width: 8),
+                        Text(currentUser?.name ?? 'Usuario'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'logout',
+                    child: Row(
+                      children: [
+                        Icon(Icons.logout),
+                        SizedBox(width: 8),
+                        Text('Cerrar Sesión'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'settings',
+                    onTap: () {
+                      Navigator.pushNamed(context, '/settings');
+                    },
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings),
+                        SizedBox(width: 8),
+                        Text('Configuración'),
+                      ],
+                    ),
+                  ),
+                ],
             icon: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.secondary,
               child: Text(
@@ -83,13 +97,9 @@ class DashboardPage extends ConsumerWidget {
           Expanded(
             child: Row(
               children: [
-                const Expanded(
-                  child: SalesChartWidget(),
-                ),
+                const Expanded(child: SalesChartWidget()),
                 const SizedBox(width: 20),
-                const Expanded(
-                  child: RecentActivitiesWidget(),
-                ),
+                const Expanded(child: RecentActivitiesWidget()),
               ],
             ),
           ),
@@ -110,13 +120,9 @@ class DashboardPage extends ConsumerWidget {
           Expanded(
             child: Row(
               children: [
-                const Expanded(
-                  child: SalesChartWidget(),
-                ),
+                const Expanded(child: SalesChartWidget()),
                 const SizedBox(width: 16),
-                const Expanded(
-                  child: RecentActivitiesWidget(),
-                ),
+                const Expanded(child: RecentActivitiesWidget()),
               ],
             ),
           ),
@@ -134,15 +140,9 @@ class DashboardPage extends ConsumerWidget {
           const SizedBox(height: 20),
           const QuickActionsWidget(),
           const SizedBox(height: 20),
-          SizedBox(
-            height: 300,
-            child: const SalesChartWidget(),
-          ),
+          SizedBox(height: 300, child: const SalesChartWidget()),
           const SizedBox(height: 20),
-          SizedBox(
-            height: 400,
-            child: const RecentActivitiesWidget(),
-          ),
+          SizedBox(height: 400, child: const RecentActivitiesWidget()),
         ],
       ),
     );
@@ -151,27 +151,28 @@ class DashboardPage extends ConsumerWidget {
   void _logout(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cerrar Sesión'),
-        content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Cerrar Sesión'),
+            content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ref.read(authProvider.notifier).logout();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false,
+                  );
+                },
+                child: const Text('Cerrar Sesión'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(authProvider.notifier).logout();
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-                (route) => false,
-              );
-            },
-            child: const Text('Cerrar Sesión'),
-          ),
-        ],
-      ),
     );
   }
 }
