@@ -10,7 +10,8 @@ class UserModel extends User {
     super.lastLoginAt,
   });
 
-  factory UserModel.fromMap(Map<String, dynamic> map) {
+  // Convert from database Map
+  factory UserModel.fromDatabase(Map<String, dynamic> map) {
     return UserModel(
       id: map['id'] as String,
       email: map['email'] as String,
@@ -23,15 +24,24 @@ class UserModel extends User {
     );
   }
 
-  Map<String, dynamic> toMap() {
+  // Convert to database Map
+  Map<String, dynamic> toDatabase() {
     return {
       'id': id,
       'email': email,
       'name': name,
       'role': role,
       'created_at': createdAt.toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
       'last_login_at': lastLoginAt?.toIso8601String(),
     };
+  }
+
+  // Create user for database insertion (with password hash)
+  Map<String, dynamic> toDatabaseWithPassword(String passwordHash) {
+    final dbMap = toDatabase();
+    dbMap['password_hash'] = passwordHash;
+    return dbMap;
   }
 
   factory UserModel.fromEntity(User user) {

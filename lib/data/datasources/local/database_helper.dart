@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -25,6 +28,20 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    // Users table (NUEVA TABLA)
+    await db.execute('''
+      CREATE TABLE users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        last_login_at TEXT
+      )
+    ''');
+
     // Products table
     await db.execute('''
       CREATE TABLE products (
@@ -96,11 +113,60 @@ class DatabaseHelper {
     ''');
 
     // Create indexes for better performance
+    await db.execute('CREATE INDEX idx_users_email ON users (email)');
+    await db.execute('CREATE INDEX idx_users_role ON users (role)');
     await db.execute('CREATE INDEX idx_products_sku ON products (sku)');
     await db.execute('CREATE INDEX idx_stock_batches_product_id ON stock_batches (product_id)');
     await db.execute('CREATE INDEX idx_stock_batches_warehouse_id ON stock_batches (warehouse_id)');
     await db.execute('CREATE INDEX idx_order_items_order_id ON order_items (order_id)');
     await db.execute('CREATE INDEX idx_order_items_product_id ON order_items (product_id)');
+
+    // Insert default users after creating tables
+    await _insertDefaultUsers(db);
+  }
+
+  Future<void> _insertDefaultUsers(Database db) async {
+    final now = DateTime.now().toIso8601String();
+    
+    await db.insert('users', {
+      'id': 'root-user',
+      'email': 'admin@sistema.com',
+      'name': 'Administrador del Sistema',
+      'role': 'admin',
+      'password_hash': _hashPassword('admin123'),
+      'created_at': now,
+      'updated_at': now,
+      'last_login_at': null,
+    });
+    
+    await db.insert('users', {
+      'id': 'user-manager',
+      'email': 'gerente@almacen.com',
+      'name': 'Gerente de Almacén',
+      'role': 'manager',
+      'password_hash': _hashPassword('gerente123'),
+      'created_at': now,
+      'updated_at': now,
+      'last_login_at': null,
+    });
+    
+    await db.insert('users', {
+      'id': 'user-operator',
+      'email': 'operador@almacen.com',
+      'name': 'Operador',
+      'role': 'operator',
+      'password_hash': _hashPassword('operador123'),
+      'created_at': now,
+      'updated_at': now,
+      'last_login_at': null,
+    });
+  }
+
+  String _hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+  
+    return digest.toString();
   }
 
   Future<void> close() async {

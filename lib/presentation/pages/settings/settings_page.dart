@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/settings_tile_widget.dart';
 import 'profile_page.dart';
 import 'backup_restore_page.dart';
+import 'database_info_page.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -169,6 +170,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onTap: _contactSupport,
             trailing: const Icon(Icons.chevron_right),
           ),
+          
+          // Debug section (only visible in debug mode)
+          ...() {
+            List<Widget> debugWidgets = [];
+            assert(() {
+              debugWidgets.addAll([
+                const SizedBox(height: 24),
+                _buildSectionHeader('Desarrollo (Debug)'),
+                SettingsTileWidget(
+                  icon: Icons.storage,
+                  title: 'Información de Base de Datos',
+                  subtitle: 'Ver ubicación y detalles de la BD',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DatabaseInfoPage(),
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                ),
+              ]);
+              return true;
+            }());
+            return debugWidgets;
+          }(),
+          
           const SizedBox(height: 24),
 
           // Danger Zone

@@ -245,7 +245,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        _buildTestUser('admin@almacen.com', 'Administrador'),
+                        _buildTestUser('admin@sistema.com', 'Administrador'),
                         _buildTestUser('gerente@almacen.com', 'Gerente'),
                         _buildTestUser('operador@almacen.com', 'Operador'),
                         const SizedBox(height: 8),

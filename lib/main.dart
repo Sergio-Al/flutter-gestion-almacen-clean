@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/pages/auth/splash_page.dart';
+import 'core/utils/database_debug_utils.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Print database location for debugging (only in debug mode)
+  assert(() {
+    DatabaseDebugUtils.printDatabaseInfo();
+    return true;
+  }());
+  
   runApp(const ProviderScope(child: MainApp()));
 }
 

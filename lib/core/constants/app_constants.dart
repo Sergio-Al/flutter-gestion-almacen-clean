@@ -1,6 +1,6 @@
 class AppConstants {
   // App Configuration
-  static const bool useMockData = true; // Cambiar a false para usar datos reales
+  static const bool useMockData = false; // Cambiar a false para usar datos reales
   
   // Database
   static const String databaseName = 'warehouse_management.db';

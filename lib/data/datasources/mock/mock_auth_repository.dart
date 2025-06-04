@@ -43,7 +43,7 @@ class MockAuthRepository implements AuthRepository {
     if (userJson == null) return null;
     
     final userMap = jsonDecode(userJson) as Map<String, dynamic>;
-    return UserModel.fromMap(userMap);
+    return UserModel.fromDatabase(userMap);
   }
 
   @override
@@ -92,7 +92,7 @@ class MockAuthRepository implements AuthRepository {
   Future<void> saveUserSession(User user) async {
     final prefs = await SharedPreferences.getInstance();
     final userModel = UserModel.fromEntity(user);
-    await prefs.setString(_userSessionKey, jsonEncode(userModel.toMap()));
+    await prefs.setString(_userSessionKey, jsonEncode(userModel.toDatabase()));
   }
 
   @override
