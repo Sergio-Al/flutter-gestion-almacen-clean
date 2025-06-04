@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gestion_almacen_stock/presentation/pages/settings/settings_page.dart';
 import '../../providers/auth_providers.dart';
 import '../auth/login_page.dart';
 import 'widgets/stats_card_widget.dart';
@@ -49,7 +50,13 @@ class DashboardPage extends ConsumerWidget {
                   PopupMenuItem(
                     value: 'settings',
                     onTap: () {
-                      Navigator.pushNamed(context, '/settings');
+                      // Push settings page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsPage(),
+                        ),
+                      );
                     },
                     child: Row(
                       children: [
