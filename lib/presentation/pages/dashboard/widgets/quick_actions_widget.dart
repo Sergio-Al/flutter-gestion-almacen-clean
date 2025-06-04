@@ -4,6 +4,7 @@ import '../../products/products_list_page.dart';
 import '../../inventory/inventory_overview_page.dart';
 import '../../warehouses/warehouses_list_page.dart';
 import '../../sales/sales_dashboard_page.dart';
+import '../../analytics/analytics_dashboard_page.dart';
 
 class QuickActionsWidget extends StatelessWidget {
   const QuickActionsWidget({Key? key}) : super(key: key);
@@ -95,7 +96,12 @@ class QuickActionsWidget extends StatelessWidget {
                 'Reportes',
                 Icons.analytics,
                 Colors.red,
-                () => _showComingSoon(context),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AnalyticsDashboardPage(),
+                  ),
+                ),
               ),
             ],
           ),
