@@ -31,3 +31,16 @@ final expiringBatchesProvider = FutureProvider.family<List<StockBatch>, DateTime
   final repository = ref.watch(stockRepositoryProvider);
   return await repository.getExpiringBatches(beforeDate);
 });
+
+// Available Stock Provider
+final availableStockProvider = FutureProvider.family<int, ({String productId, String warehouseId})>((ref, params) async {
+  final stockBatches = await ref.watch(stockBatchesByProductProvider(params.productId).future);
+  final warehouseBatches = stockBatches.where((batch) => batch.warehouseId == params.warehouseId).toList();
+  
+  int totalStock = 0;
+  for (var batch in warehouseBatches) {
+    totalStock += batch.quantity;
+  }
+  
+  return totalStock;
+});

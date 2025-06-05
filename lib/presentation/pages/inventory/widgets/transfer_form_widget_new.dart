@@ -66,77 +66,21 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(TransferFormWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    
-    bool needsStockUpdate = false;
-    
-    // Verificar si cambió el producto seleccionado
-    if (widget.selectedProduct != oldWidget.selectedProduct) {
-      setState(() {
-        _selectedProduct = widget.selectedProduct;
-        _selectedBatch = null;
-        _availableStock = 0;
-      });
-      needsStockUpdate = true;
-    }
-    
-    // Verificar si cambió el almacén de origen
-    if (widget.fromWarehouse != oldWidget.fromWarehouse) {
-      setState(() {
-        _fromWarehouse = widget.fromWarehouse;
-        _availableStock = 0;
-      });
-      needsStockUpdate = true;
-    }
-    
-    // Verificar si cambió el almacén de destino
-    if (widget.toWarehouse != oldWidget.toWarehouse) {
-      setState(() {
-        _toWarehouse = widget.toWarehouse;
-      });
-    }
-    
-    // Verificar si cambió el lote seleccionado
-    if (widget.selectedBatch != oldWidget.selectedBatch) {
-      setState(() {
-        _selectedBatch = widget.selectedBatch;
-        _availableStock = _selectedBatch?.quantity ?? 0;
-      });
-    }
-    
-    // Si necesitamos actualizar el stock, lo hacemos después del setState
-    if (needsStockUpdate && _selectedProduct != null && _fromWarehouse != null) {
-      // Usamos Future.microtask para asegurarnos de que se ejecute después de que el setState se complete
-      Future.microtask(() => _updateAvailableStock(_selectedProduct!.id, _fromWarehouse!.id));
-    }
-  }
-
-  // Actualiza el stock disponible usando el provider
+  // Método para actualizar el stock disponible basado en el producto y almacén seleccionado
   void _updateAvailableStock(String productId, String warehouseId) async {
-    // Reiniciamos primero el stock disponible para que muestre un indicador de carga
-    setState(() {
-      _availableStock = 0;
-    });
+    final stockBatchesAsync = await ref.read(stockBatchesByProductProvider(productId).future);
+    if (!mounted) return;
     
-    try {
-      // Forzamos una actualización del provider obteniendo su valor directamente
-      final stockAmount = await ref.refresh(availableStockProvider((
-        productId: productId, 
-        warehouseId: warehouseId
-      )).future);
-      
-      // Actualizamos el estado con el nuevo valor
-      if (mounted) {
-        setState(() {
-          _availableStock = stockAmount;
-        });
-      }
-    } catch (e) {
-      // Manejamos los errores si ocurren
-      debugPrint('Error al actualizar stock disponible: $e');
+    final warehouseBatches = stockBatchesAsync.where((batch) => batch.warehouseId == warehouseId).toList();
+    
+    int totalStock = 0;
+    for (var batch in warehouseBatches) {
+      totalStock += batch.quantity;
     }
+    
+    setState(() {
+      _availableStock = totalStock;
+    });
   }
 
   @override
@@ -144,9 +88,9 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
     final theme = Theme.of(context);
     
     return Card(
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(16),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -159,12 +103,11 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                   Icon(
                     Icons.swap_horiz,
                     color: theme.colorScheme.primary,
-                    size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Transferencia de Stock',
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -172,16 +115,11 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                   if (widget.onCancel != null)
                     IconButton(
                       onPressed: widget.onCancel,
-                      icon: const Icon(Icons.close, size: 20),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minHeight: 36,
-                        minWidth: 36,
-                      ),
+                      icon: const Icon(Icons.close),
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Product Selection (if not pre-selected)
               if (widget.selectedProduct == null) ...[
@@ -203,9 +141,7 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Seleccione un producto',
-                            prefixIcon: Icon(Icons.inventory_2, size: 18),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            isDense: true,
+                            prefixIcon: Icon(Icons.inventory_2),
                           ),
                           validator: (value) => value == null ? 'Por favor selecciona un producto' : null,
                           onChanged: (product) {
@@ -254,11 +190,11 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                       children: [
                         Text(
                           'Almacen origen *',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         if (widget.fromWarehouse == null)
                           Consumer(
                             builder: (context, ref, child) {
@@ -270,10 +206,8 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                                     value: _fromWarehouse,
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
-                                      hintText: 'origen',
-                                      prefixIcon: Icon(Icons.warehouse, size: 18),
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                      isDense: true,
+                                      hintText: 'Seleccione origen',
+                                      prefixIcon: Icon(Icons.warehouse),
                                     ),
                                     validator: (value) => value == null ? 'Por favor selecciona un almacen origen' : null,
                                     onChanged: (warehouse) {
@@ -304,21 +238,19 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                           )
                         else
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            height: 40,
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.warehouse, color: theme.colorScheme.primary, size: 18),
-                                const SizedBox(width: 6),
+                                Icon(Icons.warehouse, color: theme.colorScheme.primary),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     widget.fromWarehouse!.name,
-                                    overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -333,14 +265,14 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                   
                   // Transfer Arrow
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       children: [
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         Icon(
                           Icons.arrow_forward,
                           color: theme.colorScheme.primary,
-                          size: 20,
+                          size: 32,
                         ),
                       ],
                     ),
@@ -353,11 +285,11 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                       children: [
                         Text(
                           'A Almacen *',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         if (widget.toWarehouse == null)
                           Consumer(
                             builder: (context, ref, child) {
@@ -374,10 +306,8 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                                     value: _toWarehouse,
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
-                                      hintText: 'destino',
-                                      prefixIcon: Icon(Icons.warehouse_outlined, size: 18),
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                      isDense: true,
+                                      hintText: 'Seleccione destino',
+                                      prefixIcon: Icon(Icons.warehouse_outlined),
                                     ),
                                     validator: (value) {
                                       if (value == null) return 'Por favor selecciona un almacen destino';
@@ -406,21 +336,19 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                           )
                         else
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            height: 40,
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.warehouse_outlined, color: theme.colorScheme.primary, size: 18),
-                                const SizedBox(width: 6),
+                                Icon(Icons.warehouse_outlined, color: theme.colorScheme.primary),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     widget.toWarehouse!.name,
-                                    overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -434,7 +362,7 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Batch Selection (optional)
               if (_selectedProduct != null && _fromWarehouse != null) ...[
@@ -458,16 +386,16 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                         
                         if (warehouseBatches.isEmpty) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.orange.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: Colors.orange.withOpacity(0.5)),
                             ),
                             child: const Row(
                               children: [
-                                Icon(Icons.warning, color: Colors.orange, size: 16),
-                                SizedBox(width: 6),
+                                Icon(Icons.warning, color: Colors.orange),
+                                SizedBox(width: 8),
                                 Expanded(
                                   child: Text('No hay lotes disponibles para este producto en el almacén de origen'),
                                 ),
@@ -481,9 +409,7 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Seleccione un lote o deje en blanco',
-                            prefixIcon: Icon(Icons.numbers, size: 18),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            isDense: true,
+                            prefixIcon: Icon(Icons.numbers),
                           ),
                           onChanged: (batch) {
                             setState(() {
@@ -527,10 +453,8 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Ingrese cantidad a transferir',
-                            prefixIcon: Icon(Icons.numbers, size: 18),
+                            prefixIcon: Icon(Icons.numbers),
                             suffixText: 'unidades',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            isDense: true,
                           ),
                           keyboardType: TextInputType.number,
                           inputFormatters: [
@@ -565,84 +489,24 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        _selectedProduct != null && _fromWarehouse != null
-                        ? Consumer(
-                            builder: (context, ref, child) {
-                              final availableStockAsync = ref.watch(
-                                availableStockProvider((productId: _selectedProduct!.id, warehouseId: _fromWarehouse!.id))
-                              );
-                              
-                              return availableStockAsync.when(
-                                data: (stockAmount) {
-                                  // Actualizamos _availableStock para usarlo en validaciones
-                                  if (_availableStock != stockAmount) {
-                                    Future.microtask(() => setState(() {
-                                      _availableStock = stockAmount;
-                                    }));
-                                  }
-                                  
-                                  return Container(
-                                    height: 42,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: theme.colorScheme.outline),
-                                      borderRadius: BorderRadius.circular(4),
-                                      color: stockAmount > 0 
-                                          ? Colors.green.withOpacity(0.1)
-                                          : Colors.orange.withOpacity(0.1),
-                                    ),
-                                    child: Text(
-                                      '$stockAmount unidades', // Mostrar stock disponible
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: stockAmount > 0 ? Colors.green : Colors.orange,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                loading: () => Container(
-                                  height: 42,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: theme.colorScheme.outline),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                                error: (err, stack) => Container(
-                                  height: 42,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.red),
-                                    borderRadius: BorderRadius.circular(4),
-                                    color: Colors.red.withOpacity(0.1),
-                                  ),
-                                  child: Text(
-                                    'Error al cargar',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                        : Container(
-                            height: 42,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: theme.colorScheme.outline),
-                              borderRadius: BorderRadius.circular(4),
-                              color: Colors.grey.withOpacity(0.1),
-                            ),
-                            child: Text(
-                              '0 unidades', 
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                              ),
+                        Container(
+                          height: 56,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: theme.colorScheme.outline),
+                            borderRadius: BorderRadius.circular(4),
+                            color: _availableStock > 0 
+                                ? Colors.green.withOpacity(0.1)
+                                : Colors.orange.withOpacity(0.1),
+                          ),
+                          child: Text(
+                            '$_availableStock unidades',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: _availableStock > 0 ? Colors.green : Colors.orange,
                             ),
                           ),
+                        ),
                       ],
                     ),
                   ),
@@ -658,7 +522,7 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     if (_availableStock >= 10)
@@ -675,7 +539,7 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                     _buildQuickQuantityButton('Todo', _availableStock, theme),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
               ],
 
               // Reason Input
@@ -685,15 +549,13 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _reasonController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Ingrese la razón de la transferencia',
-                  prefixIcon: Icon(Icons.help_outline, size: 18),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  isDense: true,
+                  prefixIcon: Icon(Icons.help_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -711,15 +573,13 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _notesController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Notas adicionales sobre la transferencia...',
-                  prefixIcon: Icon(Icons.note, size: 18),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  isDense: true,
+                  prefixIcon: Icon(Icons.note),
                 ),
                 maxLines: 3,
               ),
@@ -759,16 +619,16 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
 
   Widget _buildInfoCard(String label, String value, IconData icon, ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: theme.colorScheme.primary, size: 18),
-          const SizedBox(width: 8),
+          Icon(icon, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -797,11 +657,9 @@ class _TransferFormWidgetState extends ConsumerState<TransferFormWidget> {
         _quantityController.text = quantity.toString();
       },
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-        minimumSize: const Size(40, 30),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 12)),
+      child: Text(label),
     );
   }
 
