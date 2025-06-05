@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/sales_providers.dart';
 import '../../providers/product_providers.dart';
-import '../../providers/stock_providers.dart';
-import '../../../domain/entities/order_item.dart';
-import '../../../domain/entities/stock_batch.dart';
+import '../../providers/customer_providers.dart';
+import '../../providers/sales_providers.dart';
+import '../../../domain/entities/customer.dart';
+import '../../../domain/usecases/sales/save_sales_order_usecase.dart';
 import 'widgets/customer_selector.dart';
 
 class CreateOrderPage extends ConsumerStatefulWidget {
@@ -19,8 +19,59 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
   final _customerController = TextEditingController();
   final _notesController = TextEditingController();
   
+  Customer? _selectedCustomer;
   List<OrderItemData> _orderItems = [];
   bool _isLoading = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Configurar el listener para cambios de estado aquí en initState
+    Future.microtask(() {
+      ref.listenManual(saveSalesOrderStateProvider, (previous, current) {
+        if (!mounted) return;
+        
+        if (!current.isLoading && (previous?.isLoading ?? false)) {
+          setState(() {
+            _isLoading = false;
+          });
+          
+          if (current.isSuccess) {
+            // Éxito
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Pedido #${current.orderId!.substring(0, 8)} creado exitosamente'),
+                backgroundColor: Colors.green,
+                action: SnackBarAction(
+                  label: 'VER',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context, 
+                      '/sales/orders/detail',
+                      arguments: current.orderId,
+                    );
+                  },
+                ),
+              ),
+            );
+            
+            // Reiniciar el estado después de mostrarlo
+            ref.read(saveSalesOrderControllerProvider.notifier).resetState();
+          } else if (current.isError) {
+            // Error
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${current.failure!.message}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -97,6 +148,8 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
   }
 
   Widget _buildCustomerSection() {
+    final customersAsync = ref.watch(customersProvider);
+    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -110,11 +163,37 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
               ),
             ),
             const SizedBox(height: 16),
-            CustomerSelector(
-              customers: const [], // TODO: Load from provider
-              onCustomerSelected: (customer) {
-                // Handle customer selection
+            customersAsync.when(
+              data: (customers) {
+                return CustomerSelector(
+                  selectedCustomer: _selectedCustomer,
+                  customers: customers,
+                  onCustomerSelected: (customer) {
+                    setState(() {
+                      _selectedCustomer = customer;
+                      // También actualiza el controlador del texto para mostrar el nombre
+                      if (customer != null) {
+                        _customerController.text = customer.name;
+                      } else {
+                        _customerController.clear();
+                      }
+                    });
+                  },
+                  hintText: 'Seleccionar cliente...',
+                );
               },
+              loading: () => const Center(
+                child: SizedBox(
+                  height: 48,
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (error, stackTrace) => CustomerSelector(
+                customers: const [],
+                onCustomerSelected: (_) {},
+                hintText: 'Error al cargar clientes',
+                enabled: false,
+              ),
             ),
           ],
         ),
@@ -459,16 +538,22 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
       return;
     }
 
-    if (_customerController.text.trim().isEmpty) {
+    if (_selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona un cliente')),
+        const SnackBar(
+          content: Text('Por favor selecciona un cliente'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     if (_orderItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Agrega al menos un producto')),
+        const SnackBar(
+          content: Text('Agrega al menos un producto al pedido'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -478,27 +563,42 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
     });
 
     try {
-      // TODO: Implement save order logic using ProcessSalesOrderUseCase
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
-      
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pedido creado exitosamente')),
+      // Convertir los orderItems a la estructura que espera el caso de uso
+      final orderItemInputs = _orderItems.map((item) {
+        return OrderItemInput(
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          batchId: item.batchId.isEmpty ? null : item.batchId,
         );
-      }
+      }).toList();
+      
+      // Preparar los parámetros para el proveedor
+      final params = SaveOrderParams(
+        customerId: _selectedCustomer!.id,
+        customerName: _selectedCustomer!.name,
+        items: orderItemInputs,
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      );
+      
+      // Guardar el pedido usando el controlador (el listener ya está configurado en initState)
+      final controller = ref.read(saveSalesOrderControllerProvider.notifier);
+      controller.saveSalesOrder(params);
+      
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al crear pedido: $e')),
+          SnackBar(
+            content: Text('Error al crear pedido: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 }

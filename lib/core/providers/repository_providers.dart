@@ -6,14 +6,17 @@ import '../../data/repositories/stock_repository_impl.dart';
 import '../../data/repositories/sales_repository_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/stock_transfer_repository_impl.dart';
+import '../../data/repositories/customer_repository_impl.dart';
 import '../../data/datasources/mock/mock_auth_repository.dart';
 import '../../data/datasources/stock_transfer_local_data_source.dart';
+import '../../data/datasources/customer_local_data_source.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/repositories/warehouse_repository.dart';
 import '../../domain/repositories/stock_repository.dart';
 import '../../domain/repositories/sales_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/stock_transfer_repository.dart';
+import '../../domain/repositories/customer_repository.dart';
 import '../constants/app_constants.dart';
 
 // Database Helper Provider
@@ -59,4 +62,14 @@ final stockTransferDataSourceProvider = Provider<StockTransferLocalDataSource>((
 final stockTransferRepositoryProvider = Provider<StockTransferRepository>((ref) {
   final dataSource = ref.watch(stockTransferDataSourceProvider);
   return StockTransferRepositoryImpl(dataSource);
+});
+
+final customerLocalDataSourceProvider = Provider<CustomerLocalDataSource>((ref) {
+  final databaseHelper = ref.watch(databaseHelperProvider);
+  return CustomerLocalDataSourceImpl(dbHelper: databaseHelper);
+});
+
+final customerRepositoryProvider = Provider<CustomerRepository>((ref) {
+  final dataSource = ref.watch(customerLocalDataSourceProvider);
+  return CustomerRepositoryImpl(localDataSource: dataSource);
 });

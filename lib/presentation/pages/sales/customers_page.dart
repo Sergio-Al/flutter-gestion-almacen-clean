@@ -487,30 +487,111 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               if (nameController.text.trim().isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('El nombre es requerido')),
                 );
                 return;
               }
-
-              // TODO: Implement save customer logic
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    customer == null 
-                        ? 'Cliente creado exitosamente'
-                        : 'Cliente actualizado exitosamente',
+              
+              Navigator.of(context).pop(); // Cerramos el diálogo primero
+              
+              try {
+                if (customer == null) {
+                  // Crear nuevo cliente
+                  final newCustomer = Customer(
+                    id: '', // El ID se generará en el datasource
+                    name: nameController.text.trim(),
+                    email: emailController.text.trim(),
+                    phone: phoneController.text.trim(),
+                    address: addressController.text.trim(),
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                  );
+                  
+                  // Mostrar indicador de carga
+                  _showLoadingDialog('Creando cliente...');
+                  
+                  // Usar el provider para crear el cliente
+                  await ref.read(createCustomerProvider(newCustomer).future);
+                  
+                  // Cerrar el indicador de carga
+                  Navigator.of(context).pop();
+                  
+                  // Mostrar mensaje de éxito
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Cliente creado exitosamente'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  // Actualizar cliente existente
+                  final updatedCustomer = Customer(
+                    id: customer.id,
+                    name: nameController.text.trim(),
+                    email: emailController.text.trim(),
+                    phone: phoneController.text.trim(),
+                    address: addressController.text.trim(),
+                    createdAt: customer.createdAt,
+                    updatedAt: DateTime.now(),
+                  );
+                  
+                  // Mostrar indicador de carga
+                  _showLoadingDialog('Actualizando cliente...');
+                  
+                  // Usar el provider para actualizar el cliente
+                  await ref.read(updateCustomerProvider(updatedCustomer).future);
+                  
+                  // Cerrar el indicador de carga
+                  Navigator.of(context).pop();
+                  
+                  // Mostrar mensaje de éxito
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Cliente actualizado exitosamente'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                // Cerrar el diálogo de carga si está abierto
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+                
+                // Mostrar mensaje de error
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: ${e.toString()}'),
+                    backgroundColor: Colors.red,
                   ),
-                ),
-              );
+                );
+              }
             },
             child: Text(customer == null ? 'Crear' : 'Guardar'),
           ),
         ],
       ),
+    );
+  }
+  
+  void _showLoadingDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              Text(message),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -526,12 +607,40 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
-              // TODO: Implement delete customer logic
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Cliente eliminado')),
-              );
+            onPressed: () async {
+              Navigator.of(context).pop(); // Cerrar el diálogo de confirmación
+              
+              try {
+                // Mostrar indicador de carga
+                _showLoadingDialog('Eliminando cliente...');
+                
+                // Usar el provider para eliminar el cliente
+                await ref.read(deleteCustomerProvider(customer.id).future);
+                
+                // Cerrar el diálogo de carga
+                Navigator.of(context).pop();
+                
+                // Mostrar mensaje de éxito
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Cliente eliminado correctamente'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                // Cerrar el diálogo de carga si está abierto
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+                
+                // Mostrar mensaje de error
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error al eliminar cliente: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,

@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 import 'tables/stock_transfer_table.dart';
+import 'tables/customer_table.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -26,7 +27,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -95,10 +96,14 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE sales_orders (
         id TEXT PRIMARY KEY,
+        customer_id TEXT NOT NULL,
         customer_name TEXT NOT NULL,
-        order_date TEXT NOT NULL,
+        date TEXT NOT NULL,
         status TEXT NOT NULL,
-        total_amount REAL NOT NULL
+        total REAL NOT NULL,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
       )
     ''');
 
@@ -108,12 +113,13 @@ class DatabaseHelper {
         id TEXT PRIMARY KEY,
         order_id TEXT NOT NULL,
         product_id TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        product_description TEXT,
         quantity INTEGER NOT NULL,
         unit_price REAL NOT NULL,
-        batch_id TEXT NOT NULL,
+        batch_id TEXT,
         FOREIGN KEY (order_id) REFERENCES sales_orders (id),
-        FOREIGN KEY (product_id) REFERENCES products (id),
-        FOREIGN KEY (batch_id) REFERENCES stock_batches (id)
+        FOREIGN KEY (product_id) REFERENCES products (id)
       )
     ''');
 
@@ -130,6 +136,9 @@ class DatabaseHelper {
       )
     ''');
 
+    // Create the customers table
+    await db.execute(CustomerTable.createTable());
+    
     // Create indexes for better performance
     await db.execute('CREATE INDEX idx_users_email ON users (email)');
     await db.execute('CREATE INDEX idx_users_role ON users (role)');
@@ -138,6 +147,8 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_stock_batches_warehouse_id ON stock_batches (warehouse_id)');
     await db.execute('CREATE INDEX idx_order_items_order_id ON order_items (order_id)');
     await db.execute('CREATE INDEX idx_order_items_product_id ON order_items (product_id)');
+    await db.execute('CREATE INDEX idx_customers_name ON ${CustomerTable.tableName} (${CustomerTable.columnName})');
+    await db.execute('CREATE INDEX idx_customers_email ON ${CustomerTable.tableName} (${CustomerTable.columnEmail})');
 
     // Insert default users and categories after creating tables
     await _insertDefaultUsers(db);
@@ -146,8 +157,57 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // Handle upgrade from version 1 to 2
-    if (oldVersion == 1 && newVersion == 2) {
+    if (oldVersion == 1 && newVersion >= 2) {
       await StockTransferTable.createTable(db);
+    }
+    
+    // Handle upgrade from version 2 to 3
+    if (oldVersion <= 2 && newVersion >= 3) {
+      await db.execute(CustomerTable.createTable());
+      await db.execute('CREATE INDEX idx_customers_name ON ${CustomerTable.tableName} (${CustomerTable.columnName})');
+      await db.execute('CREATE INDEX idx_customers_email ON ${CustomerTable.tableName} (${CustomerTable.columnEmail})');
+    }
+    
+    // Handle upgrade from version 3 to 4
+    if (oldVersion <= 3 && newVersion >= 4) {
+      // Drop old tables if they exist
+      await db.execute('DROP TABLE IF EXISTS order_items');
+      await db.execute('DROP TABLE IF EXISTS sales_orders');
+      
+      // Create new sales_orders table
+      await db.execute('''
+        CREATE TABLE sales_orders (
+          id TEXT PRIMARY KEY,
+          customer_id TEXT NOT NULL,
+          customer_name TEXT NOT NULL,
+          date TEXT NOT NULL,
+          status TEXT NOT NULL,
+          total REAL NOT NULL,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+      
+      // Create new order_items table
+      await db.execute('''
+        CREATE TABLE order_items (
+          id TEXT PRIMARY KEY,
+          order_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          product_name TEXT NOT NULL,
+          product_description TEXT,
+          quantity INTEGER NOT NULL,
+          unit_price REAL NOT NULL,
+          batch_id TEXT,
+          FOREIGN KEY (order_id) REFERENCES sales_orders (id),
+          FOREIGN KEY (product_id) REFERENCES products (id)
+        )
+      ''');
+      
+      // Re-create indexes
+      await db.execute('CREATE INDEX idx_order_items_order_id ON order_items (order_id)');
+      await db.execute('CREATE INDEX idx_order_items_product_id ON order_items (product_id)');
     }
     // Add future migration steps here as needed
   }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../domain/entities/customer.dart';
+import '../../../providers/customer_providers.dart';
 
-class CustomerSelector extends StatefulWidget {
+class CustomerSelector extends ConsumerStatefulWidget {
   final Customer? selectedCustomer;
   final List<Customer> customers;
   final ValueChanged<Customer?> onCustomerSelected;
@@ -18,10 +20,10 @@ class CustomerSelector extends StatefulWidget {
   });
 
   @override
-  State<CustomerSelector> createState() => _CustomerSelectorState();
+  ConsumerState<CustomerSelector> createState() => _CustomerSelectorState();
 }
 
-class _CustomerSelectorState extends State<CustomerSelector> {
+class _CustomerSelectorState extends ConsumerState<CustomerSelector> {
   final TextEditingController _searchController = TextEditingController();
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
@@ -162,18 +164,50 @@ class _CustomerSelectorState extends State<CustomerSelector> {
             elevation: 4.0,
             borderRadius: BorderRadius.circular(8),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: _filteredCustomers.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      itemCount: _filteredCustomers.length,
-                      itemBuilder: (context, index) {
-                        final customer = _filteredCustomers[index];
-                        return _buildCustomerItem(customer);
-                      },
+              constraints: const BoxConstraints(maxHeight: 300),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Botón para crear nuevo cliente
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey[200]!),
+                      ),
                     ),
+                    child: TextButton.icon(
+                      onPressed: () {
+                        _closeDropdown();
+                        _showCreateCustomerDialog(context);
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Crear nuevo cliente'),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        alignment: Alignment.centerLeft,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: _filteredCustomers.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: _filteredCustomers.length,
+                            itemBuilder: (context, index) {
+                              final customer = _filteredCustomers[index];
+                              return _buildCustomerItem(customer);
+                            },
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -262,13 +296,171 @@ class _CustomerSelectorState extends State<CustomerSelector> {
           const SizedBox(height: 8),
           TextButton(
             onPressed: () {
-              // Navigate to create customer
               _closeDropdown();
+              _showCreateCustomerDialog(context);
             },
             child: const Text('Crear nuevo cliente'),
           ),
         ],
       ),
+    );
+  }
+
+  void _showCreateCustomerDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final phoneController = TextEditingController();
+    final addressController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nuevo Cliente'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre *',
+                  prefixIcon: Icon(Icons.person),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Teléfono',
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: addressController,
+                decoration: const InputDecoration(
+                  labelText: 'Dirección',
+                  prefixIcon: Icon(Icons.location_on),
+                ),
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (nameController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('El nombre es requerido')),
+                );
+                return;
+              }
+
+              Navigator.of(context).pop(); // Cerrar el diálogo
+
+              try {
+                // Crear el nuevo cliente
+                final newCustomer = Customer(
+                  id: '', // El ID se generará en el datasource
+                  name: nameController.text.trim(),
+                  email: emailController.text.trim(),
+                  phone: phoneController.text.trim(),
+                  address: addressController.text.trim(),
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                );
+
+                // Mostrar indicador de carga
+                _showLoadingDialog(context, 'Creando cliente...');
+
+                // Usar el provider para crear el cliente
+                final createdCustomer = await ref
+                    .read(createCustomerProvider(newCustomer).future)
+                    .timeout(const Duration(seconds: 10));
+
+                // Cerrar el indicador de carga
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+
+                // Actualizar la lista de clientes y seleccionar el nuevo cliente
+                if (mounted) {
+                  setState(() {
+                    // Creamos una nueva lista para asegurar que se detecte el cambio
+                    final updatedCustomers = List<Customer>.from(widget.customers);
+                    updatedCustomers.add(createdCustomer);
+                    
+                    // Actualizamos la lista filtrada
+                    _filteredCustomers = updatedCustomers;
+                    
+                    // Seleccionamos automáticamente el nuevo cliente
+                    _selectCustomer(createdCustomer);
+                  });
+                }
+
+                // Mostrar mensaje de éxito
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Cliente creado exitosamente'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                // Cerrar el diálogo de carga si está abierto
+                if (context.mounted && Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+
+                // Mostrar mensaje de error
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Crear'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              Text(message),
+            ],
+          ),
+        );
+      },
     );
   }
 }

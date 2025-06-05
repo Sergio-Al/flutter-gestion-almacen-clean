@@ -41,7 +41,6 @@ class SalesOrderModel extends SalesOrder {
       'customer_name': customerName,
       'date': date.toIso8601String(),
       'status': status.name,
-      'items': items.map((item) => (item as OrderItemModel).toMap()).toList(),
       'total': total,
       'notes': notes,
       'created_at': createdAt.toIso8601String(),
@@ -50,13 +49,27 @@ class SalesOrderModel extends SalesOrder {
   }
 
   factory SalesOrderModel.fromEntity(SalesOrder salesOrder) {
+    // Convertir items manualmente para evitar problemas de tipo
+    final convertedItems = salesOrder.items.map((item) => 
+      OrderItemModel(
+        id: item.id,
+        orderId: item.orderId,
+        productId: item.productId,
+        productName: item.productName,
+        productDescription: item.productDescription,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        batchId: item.batchId,
+      )
+    ).toList();
+    
     return SalesOrderModel(
       id: salesOrder.id,
       customerId: salesOrder.customerId,
       customerName: salesOrder.customerName,
       date: salesOrder.date,
       status: salesOrder.status,
-      items: salesOrder.items,
+      items: convertedItems,
       total: salesOrder.total,
       notes: salesOrder.notes,
       createdAt: salesOrder.createdAt,

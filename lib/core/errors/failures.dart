@@ -29,3 +29,13 @@ class NetworkFailure extends Failure {
 class CacheFailure extends Failure {
   const CacheFailure({required String message}) : super(message: message);
 }
+
+// Not found failures
+class NotFoundFailure extends Failure {
+  const NotFoundFailure({required String message}) : super(message: message);
+}
+
+// Unexpected failures for unforeseen errors
+class UnexpectedFailure extends Failure {
+  const UnexpectedFailure({required String message}) : super(message: message);
+}

@@ -18,7 +18,7 @@ class SalesRepositoryImpl implements SalesRepository {
       'sales_orders',
       orderBy: 'order_date DESC',
     );
-    
+
     return maps.map((map) => SalesOrderModel.fromMap(map)).toList();
   }
 
@@ -30,7 +30,7 @@ class SalesRepositoryImpl implements SalesRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
-    
+
     if (maps.isEmpty) return null;
     return SalesOrderModel.fromMap(maps.first);
   }
@@ -43,42 +43,65 @@ class SalesRepositoryImpl implements SalesRepository {
       where: 'order_id = ?',
       whereArgs: [orderId],
     );
-    
+
     return maps.map((map) => OrderItemModel.fromMap(map)).toList();
   }
 
   @override
-  Future<String> createSalesOrder(SalesOrder salesOrder, List<OrderItem> items) async {
+  Future<String> createSalesOrder(
+    SalesOrder salesOrder,
+    List<OrderItem> items,
+  ) async {
     final db = await _databaseHelper.database;
-    
-    await db.transaction((txn) async {
-      // Insert sales order
-      final salesOrderModel = SalesOrderModel.fromEntity(salesOrder);
-      await txn.insert(
-        'sales_orders',
-        salesOrderModel.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-      
-      // Insert order items
-      for (final item in items) {
-        final orderItemModel = OrderItemModel.fromEntity(item);
+
+    print('Creando pedido: ${salesOrder.id}');
+    try {
+      await db.transaction((txn) async {
+        print('object');
+        // Insert sales order
+        final salesOrderModel = SalesOrderModel.fromEntity(salesOrder);
         await txn.insert(
-          'order_items',
-          orderItemModel.toMap(),
+          'sales_orders',
+          salesOrderModel.toMap(),
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
-      }
-    });
-    
-    return salesOrder.id;
+
+        print('?????');
+        // Insert order items - convertir cada item manualmente sin usar fromEntity
+        for (final item in items) {
+          // Crear directamente el mapa para insertar, evitando conversiones de tipo
+          final Map<String, dynamic> itemMap = {
+            'id': item.id,
+            'order_id': item.orderId,
+            'product_id': item.productId,
+            'product_name': item.productName,
+            'product_description': item.productDescription,
+            'quantity': item.quantity,
+            'unit_price': item.unitPrice,
+            'batch_id': item.batchId,
+          };
+          print('??');
+          await txn.insert(
+            'order_items',
+            itemMap,
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      });
+      
+      print('Pedido guardado con éxito: ${salesOrder.id}');
+      return salesOrder.id;
+    } catch (e) {
+      print('Error al guardar pedido: ${e.toString()}');
+      throw e;
+    }
   }
 
   @override
   Future<void> updateSalesOrder(SalesOrder salesOrder) async {
     final db = await _databaseHelper.database;
     final salesOrderModel = SalesOrderModel.fromEntity(salesOrder);
-    
+
     await db.update(
       'sales_orders',
       salesOrderModel.toMap(),
@@ -90,26 +113,21 @@ class SalesRepositoryImpl implements SalesRepository {
   @override
   Future<void> deleteSalesOrder(String id) async {
     final db = await _databaseHelper.database;
-    
+
     await db.transaction((txn) async {
       // Delete order items first
-      await txn.delete(
-        'order_items',
-        where: 'order_id = ?',
-        whereArgs: [id],
-      );
-      
+      await txn.delete('order_items', where: 'order_id = ?', whereArgs: [id]);
+
       // Delete sales order
-      await txn.delete(
-        'sales_orders',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await txn.delete('sales_orders', where: 'id = ?', whereArgs: [id]);
     });
   }
 
   @override
-  Future<List<SalesOrder>> getSalesOrdersByDateRange(DateTime start, DateTime end) async {
+  Future<List<SalesOrder>> getSalesOrdersByDateRange(
+    DateTime start,
+    DateTime end,
+  ) async {
     final db = await _databaseHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(
       'sales_orders',
@@ -117,7 +135,7 @@ class SalesRepositoryImpl implements SalesRepository {
       whereArgs: [start.toIso8601String(), end.toIso8601String()],
       orderBy: 'order_date DESC',
     );
-    
+
     return maps.map((map) => SalesOrderModel.fromMap(map)).toList();
   }
 
@@ -130,7 +148,7 @@ class SalesRepositoryImpl implements SalesRepository {
       whereArgs: [status.name],
       orderBy: 'order_date DESC',
     );
-    
+
     return maps.map((map) => SalesOrderModel.fromMap(map)).toList();
   }
 }
