@@ -5,6 +5,8 @@ import '../../../../domain/entities/product.dart';
 import '../../../../domain/entities/warehouse.dart';
 import '../../../../domain/entities/stock_batch.dart';
 import '../../../providers/warehouse_providers.dart';
+import '../../../providers/product_providers.dart';
+import '../../../providers/stock_providers.dart';
 
 enum AdjustmentType { increase, decrease, set }
 
@@ -118,7 +120,16 @@ class _AdjustmentFormWidgetState extends ConsumerState<AdjustmentFormWidget> {
                       _selectedBatch = null; // Reset batch when product changes
                     });
                   },
-                  items: [], // This would be populated from a provider
+                  items: ref.watch(productsProvider).when(
+                    data: (products) => products.map((product) {
+                      return DropdownMenuItem<Product>(
+                        value: product,
+                        child: Text('${product.name} (${product.sku})'),
+                      );
+                    }).toList(),
+                    loading: () => [],
+                    error: (_, __) => [],
+                  )
                 ),
                 const SizedBox(height: 16),
               ] else ...[
@@ -197,7 +208,34 @@ class _AdjustmentFormWidgetState extends ConsumerState<AdjustmentFormWidget> {
                       _selectedBatch = batch;
                     });
                   },
-                  items: [], // This would be populated based on selected product
+                  items: _selectedProduct != null
+                    ? ref.watch(stockBatchesByProductProvider(_selectedProduct!.id)).when(
+                        data: (batches) {
+                          if (batches.isEmpty) {
+                            return [
+                              const DropdownMenuItem<StockBatch>(
+                                enabled: false,
+                                value: null,
+                                child: Text('No hay lotes disponibles'),
+                              ),
+                            ];
+                          }
+                          return batches.map((batch) {
+                            return DropdownMenuItem<StockBatch>(
+                              value: batch,
+                              child: Text(
+                                '${batch.batchNumber} - ${batch.quantity} unidades'
+                                + (batch.expiryDate != null 
+                                    ? ' - Exp: ${_formatDate(batch.expiryDate!)}'
+                                    : ''),
+                              ),
+                            );
+                          }).toList();
+                        },
+                        loading: () => [],
+                        error: (_, __) => [],
+                      )
+                    : []
                 ),
                 const SizedBox(height: 16),
               ],
@@ -317,12 +355,34 @@ class _AdjustmentFormWidgetState extends ConsumerState<AdjustmentFormWidget> {
                             border: Border.all(color: theme.colorScheme.outline),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Text(
-                            _selectedBatch?.quantity.toString() ?? '0',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: _selectedProduct != null
+                            ? _selectedBatch != null
+                              ? Text(
+                                  _selectedBatch!.quantity.toString(),
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : ref.watch(totalStockForProductProvider(_selectedProduct!.id)).when(
+                                  data: (totalStock) => Text(
+                                    totalStock.toString(),
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  loading: () => const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  error: (_, __) => const Text('Error', style: TextStyle(color: Colors.red)),
+                                )
+                            : const Text(
+                                '0',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                ),
+                              ),
                         ),
                       ],
                     ),
@@ -438,6 +498,10 @@ class _AdjustmentFormWidgetState extends ConsumerState<AdjustmentFormWidget> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   void _handleSubmit() async {

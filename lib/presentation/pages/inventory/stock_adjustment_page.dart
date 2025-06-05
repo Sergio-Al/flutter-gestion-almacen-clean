@@ -6,6 +6,7 @@ import '../../../domain/entities/product.dart';
 import '../../../domain/entities/warehouse.dart';
 import 'widgets/adjustment_form_widget.dart';
 import 'widgets/batch_card_widget.dart';
+import '../../../presentation/providers/stock_adjustment_provider.dart';
 
 class StockAdjustmentPage extends ConsumerStatefulWidget {
   final StockBatch? selectedBatch;
@@ -250,35 +251,51 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
         ),
       );
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      // Usar el controlador de ajuste de stock
+      final stockAdjustmentController = ref.read(stockAdjustmentControllerProvider);
+      final success = await stockAdjustmentController.processStockAdjustment(adjustmentData);
 
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
 
-      // Show success message
+      // Show success or error message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Ajuste realizado con éxito'),
-              ],
+        if (success) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Ajuste realizado con éxito'),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
             ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-
-      // Refresh stock data
-      ref.invalidate(stockBatchesProvider);
-
-      // Navigate back or stay on page based on context
-      if (widget.selectedBatch != null && mounted) {
-        Navigator.of(context).pop();
+          );
+          
+          // Navigate back or stay on page based on context
+          if (widget.selectedBatch != null && mounted) {
+            Navigator.of(context).pop();
+          }
+        } else {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Error al procesar el ajuste')),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     } catch (error) {
       // Close loading dialog
