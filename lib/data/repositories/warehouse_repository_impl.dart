@@ -60,6 +60,19 @@ class WarehouseRepositoryImpl implements WarehouseRepository {
   @override
   Future<void> deleteWarehouse(String id) async {
     final db = await _databaseHelper.database;
+    
+    // Check if there are stock batches associated with this warehouse
+    final List<Map<String, dynamic>> stockBatches = await db.query(
+      'stock_batches',
+      where: 'warehouse_id = ?',
+      whereArgs: [id],
+    );
+    
+    if (stockBatches.isNotEmpty) {
+      throw Exception('No se puede eliminar el almacén porque tiene lotes de stock asociados');
+    }
+    
+    // If no stock batches are associated, proceed with deletion
     await db.delete(
       'warehouses',
       where: 'id = ?',

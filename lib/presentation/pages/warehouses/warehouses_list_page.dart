@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/warehouse_providers.dart';
+import '../../../core/providers/repository_providers.dart';
 import 'warehouse_detail_page.dart';
 import 'add_edit_warehouse_page.dart';
 import 'widgets/warehouse_card_widget.dart';
@@ -312,22 +313,32 @@ class _WarehousesListPageState extends ConsumerState<WarehousesListPage> {
     );
   }
 
-  void _navigateToAdd() {
-    Navigator.push(
+  void _navigateToAdd() async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const AddEditWarehousePage(),
       ),
     );
+    
+    // If we returned with a result, refresh the warehouses list
+    if (result != null) {
+      ref.invalidate(warehousesProvider);
+    }
   }
 
-  void _navigateToEdit(String warehouseId) {
-    Navigator.push(
+  void _navigateToEdit(String warehouseId) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddEditWarehousePage(warehouseId: warehouseId),
       ),
     );
+    
+    // If we returned with a result, refresh the warehouses list
+    if (result != null) {
+      ref.invalidate(warehousesProvider);
+    }
   }
 
   void _showDeleteConfirmation(String warehouseId) {
@@ -358,13 +369,31 @@ class _WarehousesListPageState extends ConsumerState<WarehousesListPage> {
     );
   }
 
-  void _deleteWarehouse(String warehouseId) {
-    // TODO: Implement delete functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Almacén eliminado'),
-        backgroundColor: Colors.red,
-      ),
-    );
+  void _deleteWarehouse(String warehouseId) async {
+    try {
+      final repository = ref.read(warehouseRepositoryProvider);
+      await repository.deleteWarehouse(warehouseId);
+      
+      // Refresh the warehouses list
+      ref.invalidate(warehousesProvider);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Almacén eliminado exitosamente'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar: ${error.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

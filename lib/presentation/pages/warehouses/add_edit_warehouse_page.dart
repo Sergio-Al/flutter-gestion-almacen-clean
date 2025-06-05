@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../providers/warehouse_providers.dart';
 import '../../../domain/entities/warehouse.dart';
+import '../../../core/providers/repository_providers.dart';
 
 class AddEditWarehousePage extends ConsumerStatefulWidget {
   final String? warehouseId;
@@ -351,8 +352,14 @@ class _AddEditWarehousePageState extends ConsumerState<AddEditWarehousePage> {
         contactInfo: _contactInfoController.text.trim(),
       );
 
-      // TODO: Implement save functionality via repository
-      await Future.delayed(const Duration(seconds: 1)); // Simulate save
+      // Use the warehouse repository to save the data
+      final warehouseRepository = ref.read(warehouseRepositoryProvider);
+      
+      if (_isEditing) {
+        await warehouseRepository.updateWarehouse(warehouse);
+      } else {
+        await warehouseRepository.createWarehouse(warehouse);
+      }
 
       if (mounted) {
         // Refresh the warehouses list
@@ -421,8 +428,11 @@ class _AddEditWarehousePageState extends ConsumerState<AddEditWarehousePage> {
     });
 
     try {
-      // TODO: Implement delete functionality via repository
-      await Future.delayed(const Duration(seconds: 1)); // Simulate delete
+      if (widget.warehouseId != null) {
+        // Use the warehouse repository to delete the warehouse
+        final warehouseRepository = ref.read(warehouseRepositoryProvider);
+        await warehouseRepository.deleteWarehouse(widget.warehouseId!);
+      }
 
       if (mounted) {
         // Refresh the warehouses list
