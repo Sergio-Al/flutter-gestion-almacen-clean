@@ -4,6 +4,8 @@ import 'package:crypto/crypto.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
+import 'tables/stock_transfer_table.dart';
+
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
@@ -24,8 +26,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -139,6 +142,14 @@ class DatabaseHelper {
     // Insert default users and categories after creating tables
     await _insertDefaultUsers(db);
     await _seedCategoriesTable(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Handle upgrade from version 1 to 2
+    if (oldVersion == 1 && newVersion == 2) {
+      await StockTransferTable.createTable(db);
+    }
+    // Add future migration steps here as needed
   }
 
   Future<void> _insertDefaultUsers(Database db) async {

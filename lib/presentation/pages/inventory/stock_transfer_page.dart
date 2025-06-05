@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/stock_providers.dart';
 import '../../providers/warehouse_providers.dart';
+import '../../providers/stock_transfer_providers.dart';
 import '../../../domain/entities/stock_batch.dart';
 import '../../../domain/entities/product.dart';
 import '../../../domain/entities/warehouse.dart';
+import '../../../domain/entities/stock_transfer.dart';
 import 'widgets/transfer_form_widget.dart';
 import 'widgets/batch_card_widget.dart';
 
@@ -426,66 +428,148 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
   }
 
   Widget _buildTrackTransfersTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 8, // Mock data
-      itemBuilder: (context, index) {
-        final isCompleted = index < 5;
-        final isPending = !isCompleted && index < 7;
-
-        return Card(
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor:
-                  isCompleted
-                      ? Colors.green
-                      : isPending
-                      ? Colors.orange
-                      : Colors.red,
-              child: Icon(
-                isCompleted
-                    ? Icons.check
-                    : isPending
-                    ? Icons.hourglass_empty
-                    : Icons.error,
-                color: Colors.white,
-              ),
-            ),
-            title: Text('Transferencia #${1001 + index}'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Lote: #${2001 + index}'),
-                Text('Almacén A → Almacén B'),
-                Text('Cantidad: ${(index + 1) * 25} unidades'),
-              ],
-            ),
-            trailing: Column(
+    final transfersAsync = ref.watch(stockTransfersProvider);
+    
+    return transfersAsync.when(
+      data: (transfers) {
+        if (transfers.isEmpty) {
+          return Center(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  isCompleted
-                      ? 'Completada'
-                      : isPending
-                      ? 'En Tránsito'
-                      : 'Fallida',
+                Icon(
+                  Icons.swap_horiz,
+                  size: 64,
+                  color: Colors.grey.withOpacity(0.5),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'No hay transferencias registradas',
                   style: TextStyle(
-                    color:
-                        isCompleted
-                            ? Colors.green
-                            : isPending
-                            ? Colors.orange
-                            : Colors.red,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text('Hace ${index + 1}h'),
+                const SizedBox(height: 8),
+                const Text(
+                  'Las transferencias que realices aparecerán aquí',
+                  style: TextStyle(
+                    color: Colors.grey,
+                  ),
+                ),
               ],
             ),
-            onTap: () => _showTransferDetails(index),
-          ),
+          );
+        }
+        
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: transfers.length,
+          itemBuilder: (context, index) {
+            final transfer = transfers[index];
+            final isCompleted = transfer.status == 'completed';
+            final isPending = transfer.status == 'pending';
+            
+            // Format the timestamp for display
+            final timestamp = DateTime.parse(transfer.timestamp);
+            final now = DateTime.now();
+            final difference = now.difference(timestamp);
+            
+            String timeAgo;
+            if (difference.inDays > 0) {
+              timeAgo = 'Hace ${difference.inDays}d';
+            } else if (difference.inHours > 0) {
+              timeAgo = 'Hace ${difference.inHours}h';
+            } else if (difference.inMinutes > 0) {
+              timeAgo = 'Hace ${difference.inMinutes}m';
+            } else {
+              timeAgo = 'Hace un momento';
+            }
+
+            return Card(
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor:
+                      isCompleted
+                          ? Colors.green
+                          : isPending
+                              ? Colors.orange
+                              : Colors.red,
+                  child: Icon(
+                    isCompleted
+                        ? Icons.check
+                        : isPending
+                            ? Icons.hourglass_bottom
+                            : Icons.error,
+                    color: Colors.white,
+                  ),
+                ),
+                title: Text('Transferencia ${transfer.id.split('-')[1]}'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (transfer.batchId != null) 
+                      Text('Lote: ${transfer.batchId!.split('-')[1]}'),
+                    Text('Cantidad: ${transfer.quantity} unidades'),
+                    Text('Razón: ${transfer.reason}'),
+                  ],
+                ),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      isCompleted
+                          ? 'Completada'
+                          : isPending
+                              ? 'Pendiente'
+                              : 'Cancelada',
+                      style: TextStyle(
+                        color: isCompleted
+                            ? Colors.green
+                            : isPending
+                                ? Colors.orange
+                                : Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(timeAgo),
+                  ],
+                ),
+                onTap: () => _showTransferDetails(transfer),
+              ),
+            );
+          },
         );
       },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: Colors.red.withOpacity(0.8),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Error al cargar transferencias',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error.toString(),
+              style: const TextStyle(
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -540,34 +624,65 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
             ),
       );
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-
+      // Use the create transfer use case through the provider
+      final createTransferNotifier = ref.read(createTransferNotifierProvider.notifier);
+      final result = await createTransferNotifier.createTransfer(transferData);
+      
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
 
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('¡Transferencia de stock iniciada exitosamente!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      result.when(
+        data: (transfer) {
+          if (transfer != null) {
+            // Show success message
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text('¡Transferencia de stock iniciada exitosamente!'),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
 
-      // Refresh stock data
-      ref.invalidate(stockBatchesProvider);
+            // Refresh all state data
+            ref.invalidate(stockBatchesProvider);
+            ref.invalidate(stockTransfersProvider);
+            ref.invalidate(stockTransfersByStatusProvider('pending'));
 
-      // Navigate to track transfers tab
-      _tabController.animateTo(2);
+            // Navigate to track transfers tab
+            _tabController.animateTo(2);
+          }
+        },
+        error: (error, stackTrace) {
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('Transferencia fallida: $error')),
+                  ],
+                ),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        loading: () {
+          // This should not happen as we're using our own loading dialog
+        },
+      );
+      
     } catch (error) {
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
@@ -591,25 +706,37 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
     }
   }
 
-  void _showTransferDetails(int index) {
+  void _showTransferDetails(StockTransfer transfer) {
+    // Format timestamp for display
+    final timestamp = DateTime.parse(transfer.timestamp);
+    final formattedDate = '${timestamp.day}/${timestamp.month}/${timestamp.year} ${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}';
+    
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Transferencia #${1001 + index}'),
+            title: Text('Transferencia ${transfer.id.split('-')[1]}'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDetailRow('Lote:', '#${2001 + index}'),
-                _buildDetailRow('Desde:', 'Almacén A'),
-                _buildDetailRow('Hacia:', 'Almacén B'),
-                _buildDetailRow('Cantidad:', '${(index + 1) * 25} unidades'),
-                _buildDetailRow(
-                  'Estado:',
-                  index < 5 ? 'Completada' : 'En Tránsito',
+                if (transfer.batchId != null)
+                  _buildDetailRow('Lote:', transfer.batchId!.split('-')[1]),
+                _buildDetailRow('Producto ID:', transfer.productId),
+                _buildDetailRow('Desde Almacén:', transfer.fromWarehouseId),
+                _buildDetailRow('Hacia Almacén:', transfer.toWarehouseId),
+                _buildDetailRow('Cantidad:', '${transfer.quantity} unidades'),
+                _buildDetailRow('Estado:', 
+                  transfer.status == 'completed' 
+                    ? 'Completada'
+                    : transfer.status == 'pending'
+                      ? 'Pendiente' 
+                      : 'Cancelada'
                 ),
-                _buildDetailRow('Iniciada:', 'Hace ${index + 1} horas'),
+                _buildDetailRow('Razón:', transfer.reason),
+                if (transfer.notes != null)
+                  _buildDetailRow('Notas:', transfer.notes!),
+                _buildDetailRow('Fecha:', formattedDate),
               ],
             ),
             actions: [
@@ -617,17 +744,209 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Cerrar'),
               ),
-              if (index >= 5)
+              if (transfer.status == 'pending') ...[
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    // Implement cancel transfer logic
+                    _completeTransfer(transfer.id);
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
+                  child: const Text('Completar Transferencia'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _cancelTransfer(transfer.id);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                  ),
                   child: const Text('Cancelar Transferencia'),
                 ),
+              ],
             ],
           ),
     );
+  }
+
+  void _completeTransfer(String transferId) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Completando transferencia...'),
+            ],
+          ),
+        ),
+      );
+
+      // Call the update transfer status use case
+      final updateTransferStatus = ref.read(updateTransferStatusUseCaseProvider);
+      final result = await updateTransferStatus(transferId, 'completed');
+      
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      result.fold(
+        (failure) {
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('Error al completar transferencia: ${failure.message}')),
+                  ],
+                ),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }, 
+        (transfer) {
+          // Show success message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('¡Transferencia completada exitosamente!'),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+
+          // Refresh data
+          ref.invalidate(stockBatchesProvider);
+          ref.invalidate(stockTransfersProvider);
+        }
+      );
+    } catch (error) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Error al completar transferencia: $error')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _cancelTransfer(String transferId) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Cancelando transferencia...'),
+            ],
+          ),
+        ),
+      );
+
+      // Call the cancel transfer use case
+      final cancelTransfer = ref.read(cancelTransferUseCaseProvider);
+      final result = await cancelTransfer(transferId);
+      
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      result.fold(
+        (failure) {
+          // Show error message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('Error al cancelar transferencia: ${failure.message}')),
+                  ],
+                ),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }, 
+        (_) {
+          // Show success message
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('¡Transferencia cancelada exitosamente!'),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+
+          // Refresh data
+          ref.invalidate(stockBatchesProvider);
+          ref.invalidate(stockTransfersProvider);
+        }
+      );
+    } catch (error) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Error al cancelar transferencia: $error')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -636,7 +955,7 @@ class _StockTransferPageState extends ConsumerState<StockTransferPage>
       child: Row(
         children: [
           SizedBox(
-            width: 80,
+            width: 120,
             child: Text(
               label,
               style: const TextStyle(fontWeight: FontWeight.bold),
