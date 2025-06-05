@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/stock_providers.dart';
+import '../../providers/warehouse_providers.dart';
 import '../../../domain/entities/stock_batch.dart';
+import '../../../domain/entities/warehouse.dart';
 import 'widgets/batch_card_widget.dart';
 import 'widgets/batch_form_widget.dart';
 import '../../../core/utils/date_formatter.dart';
@@ -12,7 +14,12 @@ enum BatchFilter { all, active, lowStock, nearExpiry, expired }
 enum BatchSort { batchNumber, expirationDate, quantity, recentlyAdded }
 
 class BatchManagementPage extends ConsumerStatefulWidget {
-  const BatchManagementPage({Key? key}) : super(key: key);
+  final String? warehouseId; // ID del almacén para filtrar (opcional)
+  
+  const BatchManagementPage({
+    Key? key, 
+    this.warehouseId,
+  }) : super(key: key);
 
   @override
   ConsumerState<BatchManagementPage> createState() =>
@@ -28,11 +35,17 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
   BatchFilter _selectedFilter = BatchFilter.all;
   BatchSort _selectedSort = BatchSort.recentlyAdded;
   bool _isGridView = false;
+  String? _currentWarehouseId;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    
+    // Inicializar el filtro de almacén si se proporciona un ID
+    if (widget.warehouseId != null) {
+      _currentWarehouseId = widget.warehouseId;
+    }
   }
 
   @override
@@ -48,7 +61,37 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestión de Lotes'),
+        title: _currentWarehouseId != null 
+            ? Consumer(
+                builder: (context, ref, child) {
+                  final warehouseAsync = ref.watch(warehouseByIdProvider(_currentWarehouseId!));
+                  return Row(
+                    children: [
+                      const Text('Lotes en Almacén'),
+                      const SizedBox(width: 8),
+                      warehouseAsync.when(
+                        data: (warehouse) {
+                          if (warehouse != null) {
+                            return Chip(
+                              label: Text(warehouse.name),
+                              backgroundColor: theme.colorScheme.primaryContainer,
+                              labelStyle: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+                            );
+                          }
+                          return const SizedBox();
+                        },
+                        loading: () => const SizedBox(
+                          width: 20, 
+                          height: 20, 
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        error: (_, __) => const SizedBox(),
+                      ),
+                    ],
+                  );
+                },
+              )
+            : const Text('Gestión de Lotes'),
         backgroundColor: theme.colorScheme.surfaceVariant,
         actions: [
           IconButton(
@@ -129,7 +172,10 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
   }
 
   Widget _buildBatchesTab() {
-    final stockBatchesAsync = ref.watch(stockBatchesProvider);
+    // Usar el provider filtrado por almacén si _currentWarehouseId no es nulo
+    final stockBatchesAsync = _currentWarehouseId != null 
+        ? ref.watch(stockBatchesByWarehouseProvider(_currentWarehouseId!))
+        : ref.watch(stockBatchesProvider);
 
     return Column(
       children: [
@@ -321,7 +367,13 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
                       Text('Error cargando lotes: $error'),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () => ref.invalidate(stockBatchesProvider),
+                        onPressed: () {
+                          if (_currentWarehouseId != null) {
+                            ref.invalidate(stockBatchesByWarehouseProvider(_currentWarehouseId!));
+                          } else {
+                            ref.invalidate(stockBatchesProvider);
+                          }
+                        },
                         child: const Text('Reintentar'),
                       ),
                     ],
@@ -442,7 +494,10 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
   }
 
   Widget _buildAnalyticsTab() {
-    final stockBatchesAsync = ref.watch(stockBatchesProvider);
+    // Usar el provider filtrado por almacén si _currentWarehouseId no es nulo
+    final stockBatchesAsync = _currentWarehouseId != null 
+        ? ref.watch(stockBatchesByWarehouseProvider(_currentWarehouseId!))
+        : ref.watch(stockBatchesProvider);
 
     return stockBatchesAsync.when(
       data:
@@ -954,6 +1009,9 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
                           await repository.createStockBatch(batch);
                           
                           // Refrescamos la lista de lotes
+                          if (_currentWarehouseId != null) {
+                            ref.invalidate(stockBatchesByWarehouseProvider(_currentWarehouseId!));
+                          }
                           ref.invalidate(stockBatchesProvider);
                           
                           if (mounted) {
@@ -1034,6 +1092,9 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
                           await repository.updateStockBatch(updatedBatch);
                           
                           // Refrescamos la lista de lotes
+                          if (_currentWarehouseId != null) {
+                            ref.invalidate(stockBatchesByWarehouseProvider(_currentWarehouseId!));
+                          }
                           ref.invalidate(stockBatchesProvider);
                           
                           if (mounted) {
@@ -1091,6 +1152,9 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
                     await repository.deleteStockBatch(batch.id);
                     
                     // Refrescamos la lista de lotes
+                    if (_currentWarehouseId != null) {
+                      ref.invalidate(stockBatchesByWarehouseProvider(_currentWarehouseId!));
+                    }
                     ref.invalidate(stockBatchesProvider);
                     
                     if (mounted) {

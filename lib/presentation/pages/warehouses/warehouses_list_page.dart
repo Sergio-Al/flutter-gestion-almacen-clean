@@ -304,13 +304,25 @@ class _WarehousesListPageState extends ConsumerState<WarehousesListPage> {
     );
   }
 
-  void _navigateToDetail(String warehouseId) {
-    Navigator.push(
+  void _navigateToDetail(String warehouseId) async {
+    // Navegar y esperar por cualquier cambio
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => WarehouseDetailPage(warehouseId: warehouseId),
       ),
     );
+    
+    // Refrescar la página cuando regrese, con una invalidación más completa
+    // Esto asegurará que vemos los cambios de stock aunque no se retorne un valor específico
+    ref.invalidate(warehousesProvider);
+    
+    // Forzar actualización de todos los datos de almacenes
+    // Utilizamos un pequeño delay para asegurar que los datos estén actualizados
+    // cuando se refresque la UI
+    Future.delayed(const Duration(milliseconds: 100), () {
+      ref.invalidate(warehousesProvider);
+    });
   }
 
   void _navigateToAdd() async {

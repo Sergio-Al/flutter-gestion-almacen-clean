@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/stock_batch.dart';
 import '../../core/providers/repository_providers.dart';
 import 'stock_providers.dart';
+import 'warehouse_providers.dart';
 
 // Provider para el controlador de ajustes de stock
 final stockAdjustmentControllerProvider = Provider((ref) {
@@ -156,6 +157,12 @@ class StockAdjustmentController {
       ref.invalidate(stockBatchesByProductProvider(productId));
       ref.invalidate(stockBatchesByWarehouseProvider(warehouseId));
       ref.invalidate(totalStockForProductProvider(productId));
+      
+      // Invalidar también los providers de warehouse para actualizar los datos en la UI
+      ref.invalidate(warehouseByIdProvider(warehouseId));
+      ref.invalidate(warehouseCurrentStockProvider(warehouseId));
+      ref.invalidate(warehouseCapacityProvider(warehouseId));
+      ref.invalidate(warehousesProvider);
       
       return true;
     } catch (e) {

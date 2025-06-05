@@ -7,6 +7,7 @@ import '../../../domain/entities/warehouse.dart';
 import 'widgets/adjustment_form_widget.dart';
 import 'widgets/batch_card_widget.dart';
 import '../../../presentation/providers/stock_adjustment_provider.dart';
+import '../../../presentation/providers/warehouse_providers.dart'; // Added warehouse providers import
 
 class StockAdjustmentPage extends ConsumerStatefulWidget {
   final StockBatch? selectedBatch;
@@ -254,6 +255,17 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
       // Usar el controlador de ajuste de stock
       final stockAdjustmentController = ref.read(stockAdjustmentControllerProvider);
       final success = await stockAdjustmentController.processStockAdjustment(adjustmentData);
+      
+      // Refresh warehouse-related providers directly to ensure updates
+      final warehouseId = adjustmentData['warehouseId'] as String?;
+      if (success && warehouseId != null) {
+        // Forzar actualización completa de todos los providers relacionados con almacenes
+        ref.invalidate(warehousesProvider);
+        ref.invalidate(warehouseByIdProvider(warehouseId));
+        ref.invalidate(warehouseCurrentStockProvider(warehouseId));
+        ref.invalidate(warehouseCapacityProvider(warehouseId));
+        ref.invalidate(stockBatchesByWarehouseProvider(warehouseId));
+      }
 
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
@@ -278,7 +290,9 @@ class _StockAdjustmentPageState extends ConsumerState<StockAdjustmentPage>
           
           // Navigate back or stay on page based on context
           if (widget.selectedBatch != null && mounted) {
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(true); // Return true to indicate successful adjustment
+          } else if (widget.selectedWarehouse != null && mounted) {
+            Navigator.of(context).pop(true); // Return true when coming from warehouse detail
           }
         } else {
           // Show error message

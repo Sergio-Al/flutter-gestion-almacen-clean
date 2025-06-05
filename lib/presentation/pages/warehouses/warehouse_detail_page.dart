@@ -7,6 +7,9 @@ import 'add_edit_warehouse_page.dart';
 import 'widgets/capacity_indicator.dart';
 import 'widgets/stock_distribution_chart.dart';
 import 'widgets/warehouse_map_canvas.dart';
+import '../inventory/batch_management_page.dart';
+import '../inventory/stock_transfer_page.dart';
+import '../inventory/stock_adjustment_page.dart';
 
 class WarehouseDetailPage extends ConsumerWidget {
   final String warehouseId;
@@ -29,7 +32,7 @@ class WarehouseDetailPage extends ConsumerWidget {
           if (warehouse == null) {
             return _buildNotFoundState(context);
           }
-          return _buildContent(context, warehouse, currentStockAsync, capacityAsync, stockBatchesAsync);
+          return _buildContent(context, warehouse, currentStockAsync, capacityAsync, stockBatchesAsync, ref);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => _buildErrorState(context, error.toString()),
@@ -48,6 +51,7 @@ class WarehouseDetailPage extends ConsumerWidget {
     AsyncValue<int> currentStockAsync,
     AsyncValue<int> capacityAsync,
     AsyncValue<List> stockBatchesAsync,
+    WidgetRef ref,
   ) {
     final theme = Theme.of(context);
 
@@ -93,7 +97,7 @@ class WarehouseDetailPage extends ConsumerWidget {
           ),
           actions: [
             IconButton(
-              onPressed: () => _showMoreOptions(context),
+              onPressed: () => _showMoreOptions(context, ref),
               icon: const Icon(Icons.more_vert),
             ),
           ],
@@ -157,7 +161,7 @@ class WarehouseDetailPage extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Quick Actions
-                _buildQuickActions(context, warehouse),
+                _buildQuickActions(context, warehouse, ref),
               ],
             ),
           ),
@@ -236,7 +240,7 @@ class WarehouseDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, Warehouse warehouse) {
+  Widget _buildQuickActions(BuildContext context, Warehouse warehouse, WidgetRef ref) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -268,21 +272,21 @@ class WarehouseDetailPage extends ConsumerWidget {
                   'Ver Stock',
                   Icons.inventory,
                   Colors.blue,
-                  () => _navigateToStock(context),
+                  () => _navigateToStock(context, ref),
                 ),
                 _buildActionChip(
                   context,
                   'Transferir',
                   Icons.swap_horiz,
                   Colors.green,
-                  () => _navigateToTransfer(context),
+                  () => _navigateToTransfer(context, ref),
                 ),
                 _buildActionChip(
                   context,
                   'Ajustar',
                   Icons.tune,
                   Colors.orange,
-                  () => _navigateToAdjustment(context),
+                  () => _navigateToAdjustment(context, ref),
                 ),
                 _buildActionChip(
                   context,
@@ -391,34 +395,82 @@ class WarehouseDetailPage extends ConsumerWidget {
     );
   }
 
-  void _navigateToEdit(BuildContext context) {
-    Navigator.push(
+  void _navigateToEdit(BuildContext context) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddEditWarehousePage(warehouseId: warehouseId),
       ),
     );
+    
+    // Si retornamos con un resultado, indicamos que hubo cambios al volver a la lista
+    if (result != null) {
+      Navigator.of(context).pop(true);
+    }
   }
 
-  void _navigateToStock(BuildContext context) {
-    // Navigate to stock view filtered by this warehouse
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navegando a vista de stock...')),
+  void _navigateToStock(BuildContext context, WidgetRef ref) {
+    // Navigate to batch management filtered by this warehouse
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BatchManagementPage(
+          warehouseId: warehouseId,
+        ),
+      ),
     );
   }
 
-  void _navigateToTransfer(BuildContext context) {
-    // Navigate to stock transfer with this warehouse pre-selected
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navegando a transferencia...')),
-    );
+  void _navigateToTransfer(BuildContext context, WidgetRef ref) {
+    // Navigate to stock transfer with this warehouse pre-selected as source
+    final warehouseAsync = ref.read(warehouseByIdProvider(warehouseId));
+    
+    warehouseAsync.whenData((warehouse) async {
+      if (warehouse != null) {
+        // Usar await para esperar el resultado de la transferencia
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StockTransferPage(
+              fromWarehouse: warehouse,
+            ),
+          ),
+        );
+        
+        // Si el resultado es true, refrescar los datos del almacén
+        if (result == true) {
+          ref.invalidate(warehouseByIdProvider(warehouseId));
+          ref.invalidate(warehouseCurrentStockProvider(warehouseId));
+          ref.invalidate(stockBatchesByWarehouseProvider(warehouseId));
+        }
+      }
+    });
   }
 
-  void _navigateToAdjustment(BuildContext context) {
+  void _navigateToAdjustment(BuildContext context, WidgetRef ref) async {
     // Navigate to stock adjustment with this warehouse pre-selected
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Navegando a ajuste de stock...')),
-    );
+    final warehouseAsync = ref.read(warehouseByIdProvider(warehouseId));
+    
+    warehouseAsync.whenData((warehouse) async {
+      if (warehouse != null) {
+        // Usar await para esperar el resultado del ajuste
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StockAdjustmentPage(
+              selectedWarehouse: warehouse,
+            ),
+          ),
+        );
+        
+        // Si el resultado es true, refrescar los datos del almacén
+        if (result == true) {
+          ref.invalidate(warehouseByIdProvider(warehouseId));
+          ref.invalidate(warehouseCurrentStockProvider(warehouseId));
+          ref.invalidate(stockBatchesByWarehouseProvider(warehouseId));
+        }
+      }
+    });
   }
 
   void _showReports(BuildContext context) {
@@ -427,7 +479,7 @@ class WarehouseDetailPage extends ConsumerWidget {
     );
   }
 
-  void _showMoreOptions(BuildContext context) {
+  void _showMoreOptions(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       builder: (context) => Column(
@@ -478,15 +530,20 @@ class WarehouseDetailPage extends ConsumerWidget {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              Navigator.pop(context); // Go back to list
+              
+              // Simplemente mostrar que fue eliminado, pero la eliminación real
+              // debería implementarse con el repositorio
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Almacén eliminado'),
                   backgroundColor: Colors.red,
                 ),
               );
+              
+              // Retornar true a la pantalla anterior para indicar que hubo cambios
+              Navigator.of(context).pop(true);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Eliminar'),
