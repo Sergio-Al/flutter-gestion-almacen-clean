@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gestion_almacen_stock/presentation/providers/product_providers.dart';
 import '../../../providers/auth_providers.dart';
 
 class StatsCardWidget extends ConsumerWidget {
@@ -8,6 +9,13 @@ class StatsCardWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
+    final productsAsync = ref.watch(productCountProvider);
+
+    final productsCount = productsAsync.when(
+      data: (products) => products,
+      loading: () => 'Cargando...',
+      error: (error, stack) => 'Error',
+    );
 
     return Container(
       width: double.infinity,
@@ -46,7 +54,7 @@ class StatsCardWidget extends ConsumerWidget {
               Expanded(
                 child: _buildStatItem(
                   'Productos',
-                  '124',
+                  '$productsCount',
                   Icons.inventory,
                 ),
               ),

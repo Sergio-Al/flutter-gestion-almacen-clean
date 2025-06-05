@@ -8,6 +8,12 @@ final productsProvider = FutureProvider<List<Product>>((ref) async {
   return await repository.getAllProducts();
 });
 
+// Product Count Provider
+final productCountProvider = FutureProvider<int>((ref) async {
+  final repository = ref.watch(productRepositoryProvider);
+  return await repository.getProductCount();
+});
+
 // Low Stock Products Provider
 final lowStockProductsProvider = FutureProvider<List<Product>>((ref) async {
   final repository = ref.watch(productRepositoryProvider);

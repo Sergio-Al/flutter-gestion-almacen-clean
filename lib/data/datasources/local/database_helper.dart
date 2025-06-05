@@ -12,7 +12,9 @@ class DatabaseHelper {
   static Database? _database;
 
   Future<Database> get database async {
-    _database ??= await _initDatabase();
+    if (_database == null || !_database!.isOpen) {
+      _database = await _initDatabase();
+    }
     return _database!;
   }
 
@@ -112,6 +114,19 @@ class DatabaseHelper {
       )
     ''');
 
+    // Categories table
+    await db.execute('''
+      CREATE TABLE categories (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        parent_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (parent_id) REFERENCES categories (id)
+      )
+    ''');
+
     // Create indexes for better performance
     await db.execute('CREATE INDEX idx_users_email ON users (email)');
     await db.execute('CREATE INDEX idx_users_role ON users (role)');
@@ -121,8 +136,9 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_order_items_order_id ON order_items (order_id)');
     await db.execute('CREATE INDEX idx_order_items_product_id ON order_items (product_id)');
 
-    // Insert default users after creating tables
+    // Insert default users and categories after creating tables
     await _insertDefaultUsers(db);
+    await _seedCategoriesTable(db);
   }
 
   Future<void> _insertDefaultUsers(Database db) async {
@@ -160,6 +176,42 @@ class DatabaseHelper {
       'updated_at': now,
       'last_login_at': null,
     });
+  }
+
+  Future<void> _seedCategoriesTable(Database db) async {
+    final now = DateTime.now().toIso8601String();
+    
+    final List<Map<String, dynamic>> categories = [
+      {
+        'id': 'cat-1',
+        'name': 'Electrónicos',
+        'description': 'Productos electrónicos y gadgets',
+        'parent_id': null,
+        'created_at': now,
+        'updated_at': now,
+      },
+      {
+        'id': 'cat-2',
+        'name': 'Ropa',
+        'description': 'Prendas de vestir y accesorios',
+        'parent_id': null,
+        'created_at': now,
+        'updated_at': now,
+      },
+      {
+        'id': 'cat-3',
+        'name': 'Alimentos',
+        'description': 'Productos alimenticios',
+        'parent_id': null,
+        'created_at': now,
+        'updated_at': now,
+      },
+      // Añadir más categorías según necesites
+    ];
+    
+    for (final category in categories) {
+      await db.insert('categories', category);
+    }
   }
 
   String _hashPassword(String password) {

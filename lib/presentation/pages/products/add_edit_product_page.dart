@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gestion_almacen_stock/core/providers/category_providers.dart';
+import 'package:gestion_almacen_stock/domain/entities/category.dart';
+import 'package:gestion_almacen_stock/presentation/providers/product_providers.dart';
+import 'package:gestion_almacen_stock/presentation/widgets/category_selector_dialog.dart';
 import '../../../domain/entities/product.dart';
 import '../../providers/create_product_provider.dart';
 import './widgets/product_image_widget.dart';
@@ -8,10 +12,7 @@ import './widgets/barcode_scanner_widget.dart';
 class AddEditProductPage extends ConsumerStatefulWidget {
   final Product? product; // null for add, Product instance for edit
 
-  const AddEditProductPage({
-    Key? key,
-    this.product,
-  }) : super(key: key);
+  const AddEditProductPage({Key? key, this.product}) : super(key: key);
 
   @override
   ConsumerState<AddEditProductPage> createState() => _AddEditProductPageState();
@@ -26,6 +27,7 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
   late final TextEditingController _unitPriceController;
   late final TextEditingController _costPriceController;
   late final TextEditingController _reorderPointController;
+  late final TextEditingController _categoryNameController;
 
   bool get isEditing => widget.product != null;
   String? _imageUrl;
@@ -38,11 +40,15 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
 
   void _initializeControllers() {
     final product = widget.product;
-    
+
     _skuController = TextEditingController(text: product?.sku ?? '');
     _nameController = TextEditingController(text: product?.name ?? '');
-    _descriptionController = TextEditingController(text: product?.description ?? '');
-    _categoryIdController = TextEditingController(text: product?.categoryId ?? '');
+    _descriptionController = TextEditingController(
+      text: product?.description ?? '',
+    );
+    _categoryIdController = TextEditingController(
+      text: product?.categoryId ?? '',
+    );
     _unitPriceController = TextEditingController(
       text: product?.unitPrice.toString() ?? '',
     );
@@ -52,6 +58,17 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
     _reorderPointController = TextEditingController(
       text: product?.reorderPoint.toString() ?? '',
     );
+    _categoryNameController = TextEditingController();
+    if (product?.categoryId != null) {
+      // Cargar el nombre de la categoría basado en el ID
+      ref.read(categoryByIdProvider(product!.categoryId!)).whenData((category) {
+        if (category != null) {
+          setState(() {
+            _categoryNameController.text = category.name;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -69,24 +86,25 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
   @override
   Widget build(BuildContext context) {
     final createState = ref.watch(createProductProvider);
-    
+
     ref.listen(createProductProvider, (previous, current) {
       if (current.success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isEditing 
-                ? 'Producto actualizado con éxito'
-                : 'Producto creado con éxito'
+              isEditing
+                  ? 'Producto actualizado con éxito'
+                  : 'Producto creado con éxito',
             ),
           ),
         );
         if (!isEditing) {
           _resetForm();
         }
+        ref.refresh(productCountProvider); // Refresh products list
         Navigator.pop(context, true); // Return true to indicate success
       }
-      
+
       if (current.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -107,20 +125,21 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Información'),
-                    content: Text(
-                      'Editando: ${widget.product!.name}\n'
-                      'ID: ${widget.product!.id}\n'
-                      'Creado: ${_formatDate(widget.product!.createdAt)}'
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cerrar'),
+                  builder:
+                      (context) => AlertDialog(
+                        title: const Text('Información'),
+                        content: Text(
+                          'Editando: ${widget.product!.name}\n'
+                          'ID: ${widget.product!.id}\n'
+                          'Creado: ${_formatDate(widget.product!.createdAt)}',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cerrar'),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                 );
               },
             ),
@@ -139,22 +158,22 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
                     // Product Image Section
                     _buildImageSection(),
                     const SizedBox(height: 24),
-                    
+
                     // Basic Information
                     _buildBasicInfoSection(),
                     const SizedBox(height: 24),
-                    
+
                     // Pricing Information
                     _buildPricingSection(),
                     const SizedBox(height: 24),
-                    
+
                     // Inventory Information
                     _buildInventorySection(),
                   ],
                 ),
               ),
             ),
-            
+
             // Action Buttons
             _buildActionButtons(createState),
           ],
@@ -172,9 +191,9 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
           children: [
             Text(
               'Imagen del Producto',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Center(
@@ -237,12 +256,12 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
           children: [
             Text(
               'Información Básica',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            
+
             // SKU Field with Barcode Scanner
             Row(
               children: [
@@ -254,8 +273,9 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
                       hintText: 'Código único del producto',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) => 
-                      (value?.isEmpty ?? true) ? 'Campo requerido' : null,
+                    validator:
+                        (value) =>
+                            (value?.isEmpty ?? true) ? 'Campo requerido' : null,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -267,7 +287,7 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Product Name
             TextFormField(
               controller: _nameController,
@@ -276,11 +296,12 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
                 hintText: 'Ej: iPhone 13 Pro',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) => 
-                (value?.isEmpty ?? true) ? 'Campo requerido' : null,
+              validator:
+                  (value) =>
+                      (value?.isEmpty ?? true) ? 'Campo requerido' : null,
             ),
             const SizedBox(height: 16),
-            
+
             // Description
             TextFormField(
               controller: _descriptionController,
@@ -292,25 +313,33 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
               maxLines: 3,
             ),
             const SizedBox(height: 16),
-            
+
             // Category
             TextFormField(
-              controller: _categoryIdController,
+              controller: _categoryNameController,
               decoration: const InputDecoration(
                 labelText: 'Categoría *',
                 hintText: 'Ej: Electrónicos',
                 border: OutlineInputBorder(),
                 suffixIcon: Icon(Icons.arrow_drop_down),
               ),
-              validator: (value) => 
-                (value?.isEmpty ?? true) ? 'Campo requerido' : null,
-              onTap: () {
-                // TODO: Show category picker
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Selector de categorías próximamente'),
-                  ),
+              validator:
+                  (value) =>
+                      (value?.isEmpty ?? true) ? 'Campo requerido' : null,
+              onTap: () async {
+                final Category? selectedCategory = await showDialog<Category>(
+                  context: context,
+                  builder: (_) => const CategorySelectorDialog(),
                 );
+
+                if (selectedCategory != null) {
+                  setState(() {
+                    _categoryIdController.text = selectedCategory.id;
+                    // Opcionalmente, puedes mostrar el nombre de la categoría
+                    // en lugar del ID para mejor UX
+                    _categoryNameController.text = selectedCategory.name;
+                  });
+                }
               },
               readOnly: true,
             ),
@@ -329,12 +358,12 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
           children: [
             Text(
               'Información de Precios',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            
+
             Row(
               children: [
                 Expanded(
@@ -346,10 +375,14 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
                       border: OutlineInputBorder(),
                       prefixText: '\$ ',
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Campo requerido';
-                      if (double.tryParse(value) == null) return 'Debe ser un número';
+                      if (value == null || value.isEmpty)
+                        return 'Campo requerido';
+                      if (double.tryParse(value) == null)
+                        return 'Debe ser un número';
                       if (double.parse(value) < 0) return 'Debe ser mayor a 0';
                       return null;
                     },
@@ -366,10 +399,14 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
                       border: OutlineInputBorder(),
                       prefixText: '\$ ',
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Campo requerido';
-                      if (double.tryParse(value) == null) return 'Debe ser un número';
+                      if (value == null || value.isEmpty)
+                        return 'Campo requerido';
+                      if (double.tryParse(value) == null)
+                        return 'Debe ser un número';
                       if (double.parse(value) < 0) return 'Debe ser mayor a 0';
                       return null;
                     },
@@ -378,7 +415,7 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
             _buildMarginIndicator(),
           ],
@@ -396,12 +433,12 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
           children: [
             Text(
               'Inventario',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            
+
             TextFormField(
               controller: _reorderPointController,
               decoration: const InputDecoration(
@@ -413,7 +450,8 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) return 'Campo requerido';
-                if (int.tryParse(value) == null) return 'Debe ser un número entero';
+                if (int.tryParse(value) == null)
+                  return 'Debe ser un número entero';
                 if (int.parse(value) < 0) return 'Debe ser mayor o igual a 0';
                 return null;
               },
@@ -427,7 +465,7 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
   Widget _buildMarginIndicator() {
     final costText = _costPriceController.text;
     final priceText = _unitPriceController.text;
-    
+
     if (costText.isEmpty || priceText.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(12),
@@ -444,18 +482,18 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
         ),
       );
     }
-    
+
     final cost = double.tryParse(costText);
     final price = double.tryParse(priceText);
-    
+
     if (cost == null || price == null || cost == 0) {
       return const SizedBox.shrink();
     }
-    
+
     final margin = price - cost;
     final marginPercentage = (margin / cost) * 100;
     final isPositive = margin > 0;
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -482,14 +520,16 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
                 '\$${margin.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: isPositive ? Colors.green.shade800 : Colors.red.shade800,
+                  color:
+                      isPositive ? Colors.green.shade800 : Colors.red.shade800,
                   fontSize: 16,
                 ),
               ),
               Text(
                 '${marginPercentage.toStringAsFixed(1)}%',
                 style: TextStyle(
-                  color: isPositive ? Colors.green.shade600 : Colors.red.shade600,
+                  color:
+                      isPositive ? Colors.green.shade600 : Colors.red.shade600,
                   fontSize: 12,
                 ),
               ),
@@ -518,7 +558,8 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: createState.isLoading ? null : () => Navigator.pop(context),
+                onPressed:
+                    createState.isLoading ? null : () => Navigator.pop(context),
                 child: const Text('Cancelar'),
               ),
             ),
@@ -527,13 +568,14 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
               flex: 2,
               child: ElevatedButton(
                 onPressed: createState.isLoading ? null : _submitForm,
-                child: createState.isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(isEditing ? 'Actualizar' : 'Crear Producto'),
+                child:
+                    createState.isLoading
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : Text(isEditing ? 'Actualizar' : 'Crear Producto'),
               ),
             ),
           ],
@@ -549,17 +591,18 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: BarcodeScannerWidget(
-          onBarcodeScanned: (barcode) {
-            _skuController.text = barcode;
-            Navigator.pop(context);
-          },
-        ),
-      ),
+      builder:
+          (context) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: BarcodeScannerWidget(
+              onBarcodeScanned: (barcode) {
+                _skuController.text = barcode;
+                Navigator.pop(context);
+              },
+            ),
+          ),
     );
   }
 
@@ -576,15 +619,18 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
         const SnackBar(content: Text('Actualización de producto próximamente')),
       );
     } else {
-      ref.read(createProductProvider.notifier).createProduct(
-        sku: _skuController.text,
-        name: _nameController.text,
-        description: _descriptionController.text,
-        categoryId: _categoryIdController.text,
-        unitPrice: double.parse(_unitPriceController.text),
-        costPrice: double.parse(_costPriceController.text),
-        reorderPoint: int.parse(_reorderPointController.text),
-      );
+      ref
+          .read(createProductProvider.notifier)
+          .createProduct(
+            sku: _skuController.text,
+            name: _nameController.text,
+            description: _descriptionController.text,
+            categoryId: _categoryIdController.text,
+            unitPrice: double.parse(_unitPriceController.text),
+            costPrice: double.parse(_costPriceController.text),
+            reorderPoint: int.parse(_reorderPointController.text),
+          );
+
     }
   }
 

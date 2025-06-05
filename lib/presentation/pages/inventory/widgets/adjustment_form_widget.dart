@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../domain/entities/product.dart';
 import '../../../../domain/entities/warehouse.dart';
 import '../../../../domain/entities/stock_batch.dart';
+import '../../../providers/warehouse_providers.dart';
 
 enum AdjustmentType { increase, decrease, set }
 
-class AdjustmentFormWidget extends StatefulWidget {
+class AdjustmentFormWidget extends ConsumerStatefulWidget {
   final Product? selectedProduct;
   final Warehouse? selectedWarehouse;
   final StockBatch? selectedBatch;
@@ -23,10 +25,10 @@ class AdjustmentFormWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<AdjustmentFormWidget> createState() => _AdjustmentFormWidgetState();
+  ConsumerState<AdjustmentFormWidget> createState() => _AdjustmentFormWidgetState();
 }
 
-class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
+class _AdjustmentFormWidgetState extends ConsumerState<AdjustmentFormWidget> {
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final _reasonController = TextEditingController();
@@ -57,6 +59,7 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     
     return Card(
       margin: const EdgeInsets.all(16),
@@ -150,7 +153,17 @@ class _AdjustmentFormWidgetState extends State<AdjustmentFormWidget> {
                       _selectedWarehouse = warehouse;
                     });
                   },
-                  items: [], // This would be populated from a provider
+                  items: ref.watch(warehousesProvider).when(
+                    data: (warehouses) => warehouses.map((warehouse) {
+                      print('Buscando almacen: ${warehouse.name}');
+                      return DropdownMenuItem<Warehouse>(
+                        value: warehouse,
+                        child: Text(warehouse.name),
+                      );
+                    }).toList(),
+                    loading: () => [],
+                    error: (_, __) => [],
+                  ),
                 ),
                 const SizedBox(height: 16),
               ] else ...[

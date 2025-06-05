@@ -107,4 +107,13 @@ class ProductRepositoryImpl implements ProductRepository {
     
     return maps.map((map) => ProductModel.fromMap(map)).cast<Product>().toList();
   }
+  
+  @override
+  Future<int> getProductCount() async{
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.rawQuery('SELECT COUNT(*) as count FROM products');
+    
+    if (maps.isEmpty) return 0;
+    return maps.first['count'] as int;
+  }
 }

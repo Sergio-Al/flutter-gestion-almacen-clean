@@ -5,6 +5,7 @@ import '../../providers/product_providers.dart';
 import './widgets/product_image_widget.dart';
 import './widgets/stock_level_indicator.dart';
 import './add_edit_product_page.dart';
+import '../inventory/stock_adjustment_page.dart';
 
 class ProductDetailPage extends ConsumerWidget {
   final String productId;
@@ -313,11 +314,16 @@ class ProductDetailPage extends ConsumerWidget {
             ElevatedButton.icon(
               onPressed: () {
                 // Navigate to stock management
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Gestión de stock próximamente')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StockAdjustmentPage(
+                      selectedProduct: product,
+                    ),
+                  ),
                 );
               },
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.inventory_2),
               label: const Text('Gestionar Stock'),
             ),
           ],

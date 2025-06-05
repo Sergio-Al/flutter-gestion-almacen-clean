@@ -2,6 +2,7 @@ import '../entities/product.dart';
 
 abstract class ProductRepository {
   Future<List<Product>> getAllProducts();
+  Future<int> getProductCount();
   Future<Product?> getProductById(String id);
   Future<Product?> getProductBySku(String sku);
   Future<String> createProduct(Product product);

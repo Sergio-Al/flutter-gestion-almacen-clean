@@ -27,7 +27,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User> login(String email, String password) async {
     final db = await _databaseHelper.database;
 
-    print('Intentando iniciar sesión con email: $email');
     // Buscar usuario por email
     final List<Map<String, dynamic>> users = await db.query(
       'users',
@@ -40,11 +39,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     final userData = users.first;
-
-    // En un sistema real, aquí verificarías el hash de la contraseña
-    // Por ahora, simplificamos la validación
-    print(userData);
-    // compare with cripto hashed password in db
 
     final passwordHash = userData['password_hash'] as String?;
     if (passwordHash == null) {
