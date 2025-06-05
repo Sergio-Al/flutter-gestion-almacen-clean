@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/stock_providers.dart';
 import '../../../domain/entities/stock_batch.dart';
 import 'widgets/batch_card_widget.dart';
+import 'widgets/batch_form_widget.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/providers/repository_providers.dart';
 
 enum BatchFilter { all, active, lowStock, nearExpiry, expired }
 
@@ -910,21 +912,77 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
-            title: const Text('Crear nuevo lote'),
-            content: const Text(
-              'Formulario de creacion de lote sera implementada aqui.',
+          (context) => Dialog(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.add_circle,
+                        color: Theme.of(context).primaryColor,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Crear Nuevo Lote',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        tooltip: 'Cerrar',
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: BatchFormWidget(
+                      onSubmit: (batch) async {
+                        try {
+                          // Intentamos crear el lote
+                          final repository = ref.read(stockRepositoryProvider);
+                          await repository.createStockBatch(batch);
+                          
+                          // Refrescamos la lista de lotes
+                          ref.invalidate(stockBatchesProvider);
+                          
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Lote creado exitosamente'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          // Manejamos errores
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error al crear lote: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      onCancel: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Crear'),
-              ),
-            ],
           ),
     );
   }
@@ -933,19 +991,78 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
-            title: Text('Editar lote ${batch.batchNumber}'),
-            content: const Text('Edicion de lote sera implementada aqui.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancelar'),
+          (context) => Dialog(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.edit,
+                        color: Theme.of(context).primaryColor,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Editar Lote ${batch.batchNumber}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                        tooltip: 'Cerrar',
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: BatchFormWidget(
+                      batch: batch,
+                      onSubmit: (updatedBatch) async {
+                        try {
+                          // Intentamos actualizar el lote
+                          final repository = ref.read(stockRepositoryProvider);
+                          await repository.updateStockBatch(updatedBatch);
+                          
+                          // Refrescamos la lista de lotes
+                          ref.invalidate(stockBatchesProvider);
+                          
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Lote actualizado exitosamente'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          // Manejamos errores
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error al actualizar lote: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      onCancel: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Guardar'),
-              ),
-            ],
+            ),
           ),
     );
   }
@@ -957,7 +1074,7 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
           (context) => AlertDialog(
             title: const Text('Eliminar lote'),
             content: Text(
-              'Estas seguro de eliminar el lote ${batch.batchNumber}? Esta accion no se puede deshacer.',
+              '¿Estás seguro de eliminar el lote ${batch.batchNumber}? Esta acción no se puede deshacer.',
             ),
             actions: [
               TextButton(
@@ -965,9 +1082,36 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
                 child: const Text('Cancelar'),
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.of(context).pop();
-                  // Implement delete logic
+                  
+                  try {
+                    // Intentamos eliminar el lote
+                    final repository = ref.read(stockRepositoryProvider);
+                    await repository.deleteStockBatch(batch.id);
+                    
+                    // Refrescamos la lista de lotes
+                    ref.invalidate(stockBatchesProvider);
+                    
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Lote eliminado exitosamente'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // Manejamos errores
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al eliminar lote: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: const Text('Eliminar'),
