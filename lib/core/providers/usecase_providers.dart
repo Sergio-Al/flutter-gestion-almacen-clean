@@ -6,6 +6,8 @@ import '../../domain/usecases/auth/login_usecase.dart';
 import '../../domain/usecases/auth/logout_usecase.dart';
 import '../../domain/usecases/auth/get_current_user_usecase.dart';
 import '../../domain/usecases/auth/check_auth_status_usecase.dart';
+import '../../domain/usecases/auth/update_user_usecase.dart';
+import '../../domain/usecases/auth/change_password_usecase.dart';
 import './repository_providers.dart';
 
 // Product UseCases
@@ -45,4 +47,14 @@ final getCurrentUserUseCaseProvider = Provider<GetCurrentUserUseCase>((ref) {
 final checkAuthStatusUseCaseProvider = Provider<CheckAuthStatusUseCase>((ref) {
   final repository = ref.watch(authRepositoryProvider);
   return CheckAuthStatusUseCase(repository);
+});
+
+final updateUserUseCaseProvider = Provider<UpdateUserUseCase>((ref) {
+  final repository = ref.watch(authRepositoryProvider);
+  return UpdateUserUseCase(repository);
+});
+
+final changePasswordUseCaseProvider = Provider<ChangePasswordUseCase>((ref) {
+  final repository = ref.watch(authRepositoryProvider);
+  return ChangePasswordUseCase(repository);
 });

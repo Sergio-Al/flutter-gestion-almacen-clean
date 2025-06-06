@@ -3,6 +3,8 @@ import 'package:gestion_almacen_stock/domain/usecases/auth/check_auth_status_use
 import 'package:gestion_almacen_stock/domain/usecases/auth/get_current_user_usecase.dart';
 import 'package:gestion_almacen_stock/domain/usecases/auth/login_usecase.dart';
 import 'package:gestion_almacen_stock/domain/usecases/auth/logout_usecase.dart';
+import 'package:gestion_almacen_stock/domain/usecases/auth/update_user_usecase.dart';
+import 'package:gestion_almacen_stock/domain/usecases/auth/change_password_usecase.dart';
 import '../../core/providers/usecase_providers.dart';
 import '../../domain/entities/user.dart';
 
@@ -41,12 +43,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final LogoutUseCase _logoutUseCase;
   final GetCurrentUserUseCase _getCurrentUserUseCase;
   final CheckAuthStatusUseCase _checkAuthStatusUseCase;
+  final UpdateUserUseCase _updateUserUseCase;
+  final ChangePasswordUseCase _changePasswordUseCase;
 
   AuthNotifier(
     this._loginUseCase,
     this._logoutUseCase,
     this._getCurrentUserUseCase,
     this._checkAuthStatusUseCase,
+    this._updateUserUseCase,
+    this._changePasswordUseCase,
   ) : super(const AuthState()) {
     _checkAuthStatus();
   }
@@ -116,6 +122,59 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void clearError() {
     state = state.copyWith(error: null);
   }
+
+  Future<void> updateUser({
+    required String name,
+    required String email,
+  }) async {
+    if (state.user == null) {
+      state = state.copyWith(error: 'No hay usuario autenticado');
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final updatedUser = await _updateUserUseCase(
+        id: state.user!.id,
+        name: name,
+        email: email,
+      );
+      
+      state = state.copyWith(
+        isLoading: false,
+        user: updatedUser,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await _changePasswordUseCase(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
+      
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
 }
 
 // Provider para el notifier de autenticación
@@ -124,12 +183,16 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final logoutUseCase = ref.watch(logoutUseCaseProvider);
   final getCurrentUserUseCase = ref.watch(getCurrentUserUseCaseProvider);
   final checkAuthStatusUseCase = ref.watch(checkAuthStatusUseCaseProvider);
+  final updateUserUseCase = ref.watch(updateUserUseCaseProvider);
+  final changePasswordUseCase = ref.watch(changePasswordUseCaseProvider);
   
   return AuthNotifier(
     loginUseCase,
     logoutUseCase,
     getCurrentUserUseCase,
     checkAuthStatusUseCase,
+    updateUserUseCase,
+    changePasswordUseCase,
   );
 });
 

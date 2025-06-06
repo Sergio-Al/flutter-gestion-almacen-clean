@@ -100,4 +100,37 @@ class MockAuthRepository implements AuthRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userSessionKey);
   }
+
+  @override
+  Future<User> updateUser(User user) async {
+    // Simular delay
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // En un mock, simplemente devolvemos el usuario actualizado
+    final updatedUser = UserModel.fromEntity(user.copyWith(
+      lastLoginAt: DateTime.now(),
+    ));
+    
+    // Actualizar la sesión
+    await saveUserSession(updatedUser);
+    
+    return updatedUser;
+  }
+
+  @override
+  Future<void> changePassword(String userId, String currentPassword, String newPassword) async {
+    // Simular delay
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // En el mock, cualquier contraseña actual es válida si no está vacía
+    if (currentPassword.isEmpty) {
+      throw Exception('Contraseña actual incorrecta');
+    }
+    
+    if (newPassword.length < 6) {
+      throw Exception('La nueva contraseña debe tener al menos 6 caracteres');
+    }
+    
+    // En el mock, simplemente simulamos que se cambió la contraseña
+  }
 }

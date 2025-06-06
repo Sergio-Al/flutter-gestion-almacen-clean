@@ -578,7 +578,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       children: const [
         Text('Sistema integral de gestión de inventario y almacén.'),
         SizedBox(height: 16),
-        Text('Desarrollado con Flutter para una experiencia multiplataforma.'),
+        Text('Desarrollado por Sergio Alejandro Machaca Lamas en Flutter.'),
       ],
     );
   }

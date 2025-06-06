@@ -112,4 +112,83 @@ class AuthRepositoryImpl implements AuthRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userSessionKey);
   }
+
+  @override
+  Future<User> updateUser(User user) async {
+    final db = await _databaseHelper.database;
+    
+    final userModel = UserModel.fromEntity(user);
+    
+    // Actualizar el usuario en la base de datos
+    final count = await db.update(
+      'users',
+      {
+        'name': userModel.name,
+        'email': userModel.email,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [userModel.id],
+    );
+    
+    if (count == 0) {
+      throw Exception('Usuario no encontrado');
+    }
+    
+    // Obtener el usuario actualizado
+    final List<Map<String, dynamic>> updatedUsers = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [userModel.id],
+    );
+    
+    final updatedUser = UserModel.fromDatabase(updatedUsers.first);
+    
+    // Actualizar la sesión también
+    await saveUserSession(updatedUser);
+    
+    return updatedUser;
+  }
+
+  @override
+  Future<void> changePassword(String userId, String currentPassword, String newPassword) async {
+    final db = await _databaseHelper.database;
+    
+    // Verificar el usuario y la contraseña actual
+    final List<Map<String, dynamic>> users = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+    
+    if (users.isEmpty) {
+      throw Exception('Usuario no encontrado');
+    }
+    
+    final userData = users.first;
+    final storedPasswordHash = userData['password_hash'] as String?;
+    
+    if (storedPasswordHash == null) {
+      throw Exception('Contraseña no configurada para este usuario');
+    }
+    
+    final currentPasswordHash = _hashPassword(currentPassword);
+    
+    if (!_secureCompare(currentPasswordHash, storedPasswordHash)) {
+      throw Exception('Contraseña actual incorrecta');
+    }
+    
+    // Actualizar con la nueva contraseña
+    final newPasswordHash = _hashPassword(newPassword);
+    
+    await db.update(
+      'users',
+      {
+        'password_hash': newPasswordHash,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
 }
