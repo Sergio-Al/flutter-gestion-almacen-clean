@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/stock_providers.dart';
 import '../../providers/warehouse_providers.dart';
 import '../../../domain/entities/stock_batch.dart';
-import '../../../domain/entities/warehouse.dart';
 import 'widgets/batch_card_widget.dart';
 import 'widgets/batch_form_widget.dart';
 import '../../../core/utils/date_formatter.dart';

@@ -186,3 +186,36 @@ final salesOrdersByDateRangeProvider = FutureProvider.family<List<SalesOrder>, (
 
 // Los providers de consulta ahora usan directamente el repositorio, 
 // eliminando la necesidad de datos de prueba.
+
+// Provider para actualizar el estado de un pedido
+final updateOrderStatusProvider = FutureProvider.family<bool, ({String orderId, OrderStatus newStatus})>((ref, params) async {
+  final salesRepository = ref.watch(salesRepositoryProvider);
+  
+  try {
+    // Obtener el pedido actual
+    final order = await salesRepository.getSalesOrderById(params.orderId);
+    if (order == null) {
+      return false;
+    }
+    
+    // Actualizar el estado
+    final updatedOrder = order.copyWith(
+      status: params.newStatus,
+      updatedAt: DateTime.now(),
+    );
+    
+    // Guardar los cambios
+    await salesRepository.updateSalesOrder(updatedOrder);
+    
+    // Invalidar caches para refrescar la UI
+    ref.invalidate(salesOrdersProvider);
+    ref.invalidate(salesOrderByIdProvider(params.orderId));
+    ref.invalidate(salesOrdersByStatusProvider(order.status)); // Invalidar el estado anterior
+    ref.invalidate(salesOrdersByStatusProvider(params.newStatus)); // Invalidar el nuevo estado
+    
+    return true;
+  } catch (e) {
+    print('Error al actualizar el estado del pedido: ${e.toString()}');
+    return false;
+  }
+});

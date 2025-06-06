@@ -100,7 +100,7 @@ class OrderDetailPage extends ConsumerWidget {
             // Order Summary
             orderAsync.when(
               data: (order) => order != null
-                  ? _buildOrderSummary(context, order, orderItemsAsync.value ?? [])
+                  ? _buildOrderSummary(context, order, orderItemsAsync.value ?? [], ref)
                   : const SizedBox(),
               loading: () => const SizedBox(),
               error: (_, __) => const SizedBox(),
@@ -186,6 +186,7 @@ class OrderDetailPage extends ConsumerWidget {
     BuildContext context,
     SalesOrder order,
     List<OrderItem> items,
+    WidgetRef ref,
   ) {
     final subtotal = items.fold<double>(0, (sum, item) => sum + item.totalPrice);
     final taxes = subtotal * 0.1; // 10% tax example
@@ -220,7 +221,7 @@ class OrderDetailPage extends ConsumerWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => _showEditStatusDialog(context, order),
+                    onPressed: () => _showEditStatusDialog(context, ref, order),
                     child: const Text('Cambiar Estado'),
                   ),
                 ),
@@ -356,7 +357,7 @@ class OrderDetailPage extends ConsumerWidget {
       case 'edit_status':
         final order = ref.read(salesOrderByIdProvider(orderId)).value;
         if (order != null) {
-          _showEditStatusDialog(context, order);
+          _showEditStatusDialog(context, ref, order);
         }
         break;
       case 'duplicate':
@@ -368,7 +369,7 @@ class OrderDetailPage extends ConsumerWidget {
     }
   }
 
-  void _showEditStatusDialog(BuildContext context, SalesOrder order) {
+  void _showEditStatusDialog(BuildContext context, WidgetRef ref, SalesOrder order) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -379,15 +380,55 @@ class OrderDetailPage extends ConsumerWidget {
             title: Text(_getStatusText(status)),
             value: status,
             groupValue: order.status,
-            onChanged: (value) {
-              if (value != null) {
-                // TODO: Implement status update
+            onChanged: (value) async {
+              if (value != null && value != order.status) {
+                // Cerrar el diálogo
                 Navigator.pop(context);
+                
+                // Mostrar indicador de progreso
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Estado actualizado a ${_getStatusText(value)}'),
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 10),
+                        Text('Actualizando estado...'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 1),
                   ),
                 );
+                
+                // Actualizar el estado con el provider
+                final result = await ref.read(
+                  updateOrderStatusProvider(
+                    (orderId: order.id, newStatus: value)
+                  ).future
+                );
+                
+                if (context.mounted) {
+                  if (result) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Estado actualizado a ${_getStatusText(value)}'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error al actualizar el estado'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              } else {
+                Navigator.pop(context);
               }
             },
           )).toList(),

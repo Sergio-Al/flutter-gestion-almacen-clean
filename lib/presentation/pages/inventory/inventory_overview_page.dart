@@ -164,7 +164,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
       children: [
         Expanded(
           child: _buildSummaryCard(
-            'Total de Productos',
+            'Total Productos',
             totalProducts.toString(),
             Icons.inventory,
             Colors.blue,
@@ -232,6 +232,7 @@ class _InventoryOverviewPageState extends ConsumerState<InventoryOverviewPage>
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: color,
+              fontSize: 20
             ),
           ),
           Text(

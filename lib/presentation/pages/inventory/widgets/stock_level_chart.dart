@@ -6,11 +6,8 @@ class StockLevelChart extends ConsumerWidget {
   final String? warehouseId;
   final String? productId;
 
-  const StockLevelChart({
-    Key? key,
-    this.warehouseId,
-    this.productId,
-  }) : super(key: key);
+  const StockLevelChart({Key? key, this.warehouseId, this.productId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,7 +34,9 @@ class StockLevelChart extends ConsumerWidget {
                       ref.refresh(stockBatchesByProductProvider(productId!));
                     }
                     if (warehouseId != null) {
-                      ref.refresh(stockBatchesByWarehouseProvider(warehouseId!));
+                      ref.refresh(
+                        stockBatchesByWarehouseProvider(warehouseId!),
+                      );
                     }
                   },
                   tooltip: 'Actualizar',
@@ -45,10 +44,7 @@ class StockLevelChart extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: _buildChart(context, ref),
-            ),
+            SizedBox(height: 200, child: _buildChart(context, ref)),
           ],
         ),
       ),
@@ -56,37 +52,35 @@ class StockLevelChart extends ConsumerWidget {
   }
 
   Widget _buildChart(BuildContext context, WidgetRef ref) {
-    final stockBatchesAsyncValue = warehouseId != null
-        ? ref.watch(stockBatchesByWarehouseProvider(warehouseId!))
-        : productId != null
+    final stockBatchesAsyncValue =
+        warehouseId != null
+            ? ref.watch(stockBatchesByWarehouseProvider(warehouseId!))
+            : productId != null
             ? ref.watch(stockBatchesByProductProvider(productId!))
             : ref.watch(stockBatchesProvider);
 
     return stockBatchesAsyncValue.when(
       data: (batches) => _buildStockChart(context, batches),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Colors.grey[400],
+      error:
+          (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+                const SizedBox(height: 8),
+                Text(
+                  'Error al cargar datos',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => ref.refresh(stockBatchesProvider),
+                  child: const Text('Reintentar'),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Error al cargar datos',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => ref.refresh(stockBatchesProvider),
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -96,11 +90,7 @@ class StockLevelChart extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 48,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 8),
             Text(
               'No hay datos de stock',
@@ -120,64 +110,66 @@ class StockLevelChart extends ConsumerWidget {
       productStocks[productId] = (currentStock + batchQuantity).toInt();
     }
 
-    final int maxStock = productStocks.values.isNotEmpty 
-        ? productStocks.values.reduce((a, b) => a > b ? a : b)
-        : 100;
+    final int maxStock =
+        productStocks.values.isNotEmpty
+            ? productStocks.values.reduce((a, b) => a > b ? a : b)
+            : 100;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
-        children: productStocks.entries.map((entry) {
-          final productId = entry.key;
-          final stock = entry.value;
-          final height = (stock / maxStock) * 150;
-          
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // Stock value
-                Text(
-                  stock.toString(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                
-                // Bar
-                Container(
-                  width: 40,
-                  height: height.clamp(10, 150),
-                  decoration: BoxDecoration(
-                    color: _getStockColor(stock),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(4),
+        children:
+            productStocks.entries.map((entry) {
+              final productId = entry.key;
+              final stock = entry.value;
+              final height = (stock / maxStock) * 150;
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Stock value
+                    Text(
+                      stock.toString(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+
+                    // Bar
+                    Container(
+                      width: 40,
+                      height: height.clamp(10, 150),
+                      decoration: BoxDecoration(
+                        color: _getStockColor(stock),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(4),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Product ID (truncated)
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        productId.length > 8
+                            ? '${productId.substring(0, 8)}...'
+                            : productId,
+                        style: const TextStyle(fontSize: 10),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                
-                // Product ID (truncated)
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    productId.length > 8 
-                        ? '${productId.substring(0, 8)}...'
-                        : productId,
-                    style: const TextStyle(fontSize: 10),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }
