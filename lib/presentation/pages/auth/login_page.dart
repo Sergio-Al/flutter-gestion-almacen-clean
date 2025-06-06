@@ -250,7 +250,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         _buildTestUser('operador@almacen.com', 'Operador'),
                         const SizedBox(height: 8),
                         const Text(
-                          'Contraseña: cualquiera',
+                          'Contraseña: admin123, gerente123, operador123',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 12,

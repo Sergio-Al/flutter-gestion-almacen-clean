@@ -579,7 +579,7 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
           Colors.red,
         ),
         _buildAnalyticsCard(
-          'Lotes Cerca de Expirar',
+          'Por Expirar',
           nearExpiryBatches.toString(),
           Icons.warning,
           Colors.orange,
@@ -600,13 +600,14 @@ class _BatchManagementPageState extends ConsumerState<BatchManagementPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 32),
+            Icon(icon, color: color, size: 20),
             const SizedBox(height: 8),
             Text(
               value,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: color,
+                fontSize: 18
               ),
             ),
             Text(
