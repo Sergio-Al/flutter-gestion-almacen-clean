@@ -14,9 +14,10 @@ class SalesRepositoryImpl implements SalesRepository {
   @override
   Future<List<SalesOrder>> getAllSalesOrders() async {
     final db = await _databaseHelper.database;
+    print('here');
     final List<Map<String, dynamic>> maps = await db.query(
       'sales_orders',
-      orderBy: 'order_date DESC',
+      orderBy: 'created_at DESC',
     );
 
     return maps.map((map) => SalesOrderModel.fromMap(map)).toList();
@@ -57,7 +58,6 @@ class SalesRepositoryImpl implements SalesRepository {
     print('Creando pedido: ${salesOrder.id}');
     try {
       await db.transaction((txn) async {
-        print('object');
         // Insert sales order
         final salesOrderModel = SalesOrderModel.fromEntity(salesOrder);
         await txn.insert(
@@ -66,7 +66,6 @@ class SalesRepositoryImpl implements SalesRepository {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
-        print('?????');
         // Insert order items - convertir cada item manualmente sin usar fromEntity
         for (final item in items) {
           // Crear directamente el mapa para insertar, evitando conversiones de tipo
@@ -80,7 +79,6 @@ class SalesRepositoryImpl implements SalesRepository {
             'unit_price': item.unitPrice,
             'batch_id': item.batchId,
           };
-          print('??');
           await txn.insert(
             'order_items',
             itemMap,

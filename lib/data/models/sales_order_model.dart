@@ -24,9 +24,8 @@ class SalesOrderModel extends SalesOrder {
       status: OrderStatus.values.firstWhere(
         (e) => e.name == map['status'] as String,
       ),
-      items: (map['items'] as List<dynamic>?)
-          ?.map((item) => OrderItemModel.fromMap(item as Map<String, dynamic>))
-          .toList() ?? [],
+      // Items se cargan por separado desde la tabla order_items
+      items: [],
       total: (map['total'] as num).toDouble(),
       notes: map['notes'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
