@@ -15,6 +15,7 @@ class CreateProductUseCase {
     required double unitPrice,
     required double costPrice,
     required int reorderPoint,
+    String? imageUrl,
   }) async {
     // Verificar si el SKU ya existe
     final existingProduct = await _repository.getProductBySku(sku);
@@ -35,6 +36,7 @@ class CreateProductUseCase {
       reorderPoint: reorderPoint,
       createdAt: now,
       updatedAt: now,
+      imageUrl: imageUrl,
     );
 
     // Guardar en el repositorio

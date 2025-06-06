@@ -41,6 +41,7 @@ class CreateProductNotifier extends StateNotifier<CreateProductState> {
     required double unitPrice,
     required double costPrice,
     required int reorderPoint,
+    String? imageUrl,
   }) async {
     state = state.copyWith(isLoading: true, error: null, success: false);
 
@@ -53,6 +54,7 @@ class CreateProductNotifier extends StateNotifier<CreateProductState> {
         unitPrice: unitPrice,
         costPrice: costPrice,
         reorderPoint: reorderPoint,
+        imageUrl: imageUrl,
       );
 
       state = state.copyWith(isLoading: false, success: true);

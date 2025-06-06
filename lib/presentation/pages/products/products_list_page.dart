@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gestion_almacen_stock/presentation/providers/product_providers.dart';
 import '../../../domain/entities/product.dart';
 import 'widgets/product_grid_widget.dart';
+import 'widgets/product_image_widget.dart';
 import 'product_detail_page.dart';
 import 'add_edit_product_page.dart';
 import 'product_search_page.dart';
@@ -196,13 +197,15 @@ class _ProductsListPageState extends ConsumerState<ProductsListPage> {
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Theme.of(context).primaryColor,
-              child: Text(
-                product.name.substring(0, 1).toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(25),
+              child: Container(
+                width: 50,
+                height: 50,
+                child: ProductImageWidget(
+                  productId: product.id,
+                  imageUrl: product.imageUrl,
+                  size: 50,
                 ),
               ),
             ),

@@ -118,12 +118,24 @@ class ProductDetailPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Product Image
-            SizedBox(
+            Container(
               width: 120,
               height: 120,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 3,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: ProductImageWidget(
                 productId: product.id,
-                imageUrl: null, // Add image URL when available
+                imageUrl: product.imageUrl,
+                size: 120,
               ),
             ),
             const SizedBox(width: 16),

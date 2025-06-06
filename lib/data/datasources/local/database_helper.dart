@@ -27,7 +27,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -60,7 +60,8 @@ class DatabaseHelper {
         cost_price REAL NOT NULL,
         reorder_point INTEGER NOT NULL,
         created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        image_url TEXT
       )
     ''');
 
@@ -208,6 +209,12 @@ class DatabaseHelper {
       // Re-create indexes
       await db.execute('CREATE INDEX idx_order_items_order_id ON order_items (order_id)');
       await db.execute('CREATE INDEX idx_order_items_product_id ON order_items (product_id)');
+    }
+    
+    // Handle upgrade from version 4 to 5
+    if (oldVersion <= 4 && newVersion >= 5) {
+      // Add the image_url column to the products table
+      await db.execute('ALTER TABLE products ADD COLUMN image_url TEXT');
     }
     // Add future migration steps here as needed
   }

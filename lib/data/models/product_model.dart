@@ -12,6 +12,7 @@ class ProductModel extends Product {
     required super.reorderPoint,
     required super.createdAt,
     required super.updatedAt,
+    super.imageUrl,
   });
 
   factory ProductModel.fromMap(Map<String, dynamic> map) {
@@ -26,6 +27,7 @@ class ProductModel extends Product {
       reorderPoint: map['reorder_point'] as int,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
+      imageUrl: map['image_url'] as String?,
     );
   }
 
@@ -41,6 +43,7 @@ class ProductModel extends Product {
       'reorder_point': reorderPoint,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'image_url': imageUrl,
     };
   }
 
@@ -56,6 +59,7 @@ class ProductModel extends Product {
       reorderPoint: product.reorderPoint,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
+      imageUrl: product.imageUrl,
     );
   }
 }

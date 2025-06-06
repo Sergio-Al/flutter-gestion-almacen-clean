@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ProductImageWidget extends StatelessWidget {
@@ -30,20 +31,37 @@ class ProductImageWidget extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(7),
         child: imageUrl != null && imageUrl!.isNotEmpty
-            ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return _buildLoadingPlaceholder();
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return _buildImagePlaceholder();
-                },
-              )
+            ? _buildImageWidget()
             : _buildImagePlaceholder(),
       ),
     );
+  }
+  
+  Widget _buildImageWidget() {
+    // Check if the image URL is a file path
+    if (imageUrl!.startsWith('/')) {
+      // It's a local file path
+      return Image.file(
+        File(imageUrl!),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildImagePlaceholder();
+        },
+      );
+    } else {
+      // It's a network URL
+      return Image.network(
+        imageUrl!,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return _buildLoadingPlaceholder();
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return _buildImagePlaceholder();
+        },
+      );
+    }
   }
 
   Widget _buildImagePlaceholder() {

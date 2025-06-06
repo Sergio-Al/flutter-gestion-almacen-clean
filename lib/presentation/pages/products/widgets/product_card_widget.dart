@@ -39,6 +39,7 @@ class ProductCardWidget extends StatelessWidget {
                 children: [
                   ProductImageWidget(
                     productId: product.id,
+                    imageUrl: product.imageUrl,
                     size: 60,
                   ),
                   const SizedBox(width: 12),

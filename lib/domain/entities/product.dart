@@ -9,6 +9,7 @@ class Product {
   final int reorderPoint;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? imageUrl;
 
   const Product({
     required this.id,
@@ -21,6 +22,7 @@ class Product {
     required this.reorderPoint,
     required this.createdAt,
     required this.updatedAt,
+    this.imageUrl,
   });
 
   Product copyWith({
@@ -34,6 +36,7 @@ class Product {
     int? reorderPoint,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? imageUrl,
   }) {
     return Product(
       id: id ?? this.id,
@@ -46,6 +49,7 @@ class Product {
       reorderPoint: reorderPoint ?? this.reorderPoint,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 

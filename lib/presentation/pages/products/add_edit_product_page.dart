@@ -4,6 +4,8 @@ import 'package:gestion_almacen_stock/core/providers/category_providers.dart';
 import 'package:gestion_almacen_stock/domain/entities/category.dart';
 import 'package:gestion_almacen_stock/presentation/providers/product_providers.dart';
 import 'package:gestion_almacen_stock/presentation/widgets/category_selector_dialog.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../../domain/entities/product.dart';
 import '../../providers/create_product_provider.dart';
 import './widgets/product_image_widget.dart';
@@ -28,6 +30,9 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
   late final TextEditingController _costPriceController;
   late final TextEditingController _reorderPointController;
   late final TextEditingController _categoryNameController;
+  
+  final ImagePicker _imagePicker = ImagePicker();
+  File? _selectedImage;
 
   bool get isEditing => widget.product != null;
   String? _imageUrl;
@@ -213,26 +218,22 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
                     children: [
                       OutlinedButton.icon(
                         onPressed: () {
-                          // TODO: Implement image picker
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Selección de imagen próximamente'),
-                            ),
-                          );
+                          _pickImageFromGallery();
                         },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green,
+                        ),
                         icon: const Icon(Icons.photo),
                         label: const Text('Galería'),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton.icon(
                         onPressed: () {
-                          // TODO: Implement camera
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Cámara próximamente'),
-                            ),
-                          );
+                          _pickImageFromCamera();
                         },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.blue,
+                        ),
                         icon: const Icon(Icons.camera_alt),
                         label: const Text('Cámara'),
                       ),
@@ -619,6 +620,8 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
         const SnackBar(content: Text('Actualización de producto próximamente')),
       );
     } else {
+      // TODO: Implement image uploading logic and store imageUrl
+      // For now we're just passing the local path
       ref
           .read(createProductProvider.notifier)
           .createProduct(
@@ -629,8 +632,8 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
             unitPrice: double.parse(_unitPriceController.text),
             costPrice: double.parse(_costPriceController.text),
             reorderPoint: int.parse(_reorderPointController.text),
+            imageUrl: _imageUrl, // Pass the selected image URL
           );
-
     }
   }
 
@@ -643,12 +646,82 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
     _unitPriceController.clear();
     _costPriceController.clear();
     _reorderPointController.clear();
+    _categoryNameController.clear();
     setState(() {
       _imageUrl = null;
+      _selectedImage = null;
     });
   }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+      
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+          _imageUrl = pickedFile.path; // Update the image URL to display the selected image
+        });
+        
+        // TODO: Here you would upload the image to storage or process it
+        // For now, we're just updating the UI to show the selected image
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Imagen seleccionada con éxito'),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al seleccionar imagen: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  Future<void> _pickImageFromCamera() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageQuality: 85,
+      );
+      
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+          _imageUrl = pickedFile.path; // Update the image URL to display the selected image
+        });
+        
+        // TODO: Here you would upload the image to storage or process it
+        // For now, we're just updating the UI to show the selected image
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Imagen capturada con éxito'),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al capturar imagen: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

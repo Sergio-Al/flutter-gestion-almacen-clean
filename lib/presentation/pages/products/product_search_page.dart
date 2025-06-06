@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/product.dart';
+import '../../../domain/entities/category.dart';
 import '../../providers/product_providers.dart';
+import '../../widgets/category_selector_dialog.dart';
 import './widgets/product_card_widget.dart';
 import './widgets/barcode_scanner_widget.dart';
 import './product_detail_page.dart';
+import './add_edit_product_page.dart';
 
 class ProductSearchPage extends ConsumerStatefulWidget {
   const ProductSearchPage({Key? key}) : super(key: key);
@@ -232,13 +235,18 @@ class _ProductSearchPageState extends ConsumerState<ProductSearchPage> {
                 _selectedCategory = value;
               });
             },
-            onTap: () {
-              // TODO: Show category picker
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Selector de categorías próximamente'),
-                ),
+            onTap: () async {
+              final Category? selectedCategory = await showDialog<Category>(
+                context: context,
+                builder: (_) => const CategorySelectorDialog(),
               );
+
+              if (selectedCategory != null) {
+                setState(() {
+                  _categoryController.text = selectedCategory.name;
+                  _selectedCategory = selectedCategory.id;
+                });
+              }
             },
           ),
           const SizedBox(height: 16),
@@ -574,9 +582,11 @@ class _ProductSearchPageState extends ConsumerState<ProductSearchPage> {
   }
 
   void _editProduct(Product product) {
-    // TODO: Navigate to edit product page
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Editar ${product.name} - próximamente')),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddEditProductPage(product: product),
+      ),
     );
   }
 
