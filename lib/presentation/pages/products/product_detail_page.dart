@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/product.dart';
+import '../../../core/providers/repository_providers.dart';
 import '../../providers/product_providers.dart';
 import './widgets/product_image_widget.dart';
 import './widgets/stock_level_indicator.dart';
@@ -24,7 +25,7 @@ class ProductDetailPage extends ConsumerWidget {
         title: const Text('Detalles del Producto'),
         actions: [
           PopupMenuButton<String>(
-            onSelected: (value) => _handleMenuAction(context, value, productAsyncValue.value),
+            onSelected: (value) => _handleMenuAction(context, value, productAsyncValue.value, ref),
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'edit',
@@ -435,7 +436,7 @@ class ProductDetailPage extends ConsumerWidget {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  void _handleMenuAction(BuildContext context, String action, Product? product) {
+  void _handleMenuAction(BuildContext context, String action, Product? product, WidgetRef ref) {
     if (product == null) return;
 
     switch (action) {
@@ -448,12 +449,12 @@ class ProductDetailPage extends ConsumerWidget {
         );
         break;
       case 'delete':
-        _showDeleteDialog(context, product);
+        _showDeleteDialog(context, product, ref);
         break;
     }
   }
 
-  void _showDeleteDialog(BuildContext context, Product product) {
+  void _showDeleteDialog(BuildContext context, Product product, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -469,10 +470,39 @@ class ProductDetailPage extends ConsumerWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Implement delete functionality
+              
+              final productRepository = ref.read(productRepositoryProvider);
+              
+              // Mostrar indicador de carga
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Función de eliminar próximamente')),
+                const SnackBar(content: Text('Eliminando producto...'))
               );
+              
+              // Eliminar el producto usando el repositorio
+              productRepository.deleteProduct(product.id)
+                .then((_) {
+                  // Invalidar los providers para refrescar la UI
+                  ref.invalidate(productsProvider);
+                  ref.invalidate(productCountProvider);
+                  ref.invalidate(lowStockProductsProvider);
+                  
+                  // Mostrar mensaje de éxito
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Producto eliminado con éxito'))
+                  );
+                  
+                  // Regresar a la pantalla anterior
+                  Navigator.pop(context, true);
+                })
+                .catchError((e) {
+                  // Mostrar mensaje de error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    )
+                  );
+                });
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Eliminar'),

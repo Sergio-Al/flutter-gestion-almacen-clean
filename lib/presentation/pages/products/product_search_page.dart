@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/product.dart';
 import '../../../domain/entities/category.dart';
+import '../../../core/providers/repository_providers.dart';
 import '../../providers/product_providers.dart';
 import '../../widgets/category_selector_dialog.dart';
 import './widgets/product_card_widget.dart';
@@ -606,10 +607,36 @@ class _ProductSearchPageState extends ConsumerState<ProductSearchPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Implement delete functionality
+              
+              final productRepository = ref.read(productRepositoryProvider);
+              
+              // Mostrar indicador de carga
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Función de eliminar próximamente')),
+                const SnackBar(content: Text('Eliminando producto...'))
               );
+              
+              // Eliminar el producto usando el repositorio
+              productRepository.deleteProduct(product.id)
+                .then((_) {
+                  // Invalidar los providers para refrescar la UI
+                  ref.invalidate(productsProvider);
+                  ref.invalidate(productCountProvider);
+                  ref.invalidate(lowStockProductsProvider);
+                  
+                  // Mostrar mensaje de éxito
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Producto eliminado con éxito'))
+                  );
+                })
+                .catchError((e) {
+                  // Mostrar mensaje de error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    )
+                  );
+                });
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Eliminar'),

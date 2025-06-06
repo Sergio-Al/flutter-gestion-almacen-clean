@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gestion_almacen_stock/presentation/providers/product_providers.dart';
 import '../../../domain/entities/product.dart';
+import '../../../core/providers/repository_providers.dart';
 import 'widgets/product_grid_widget.dart';
 import 'widgets/product_image_widget.dart';
 import 'product_detail_page.dart';
@@ -322,16 +323,56 @@ class _ProductsListPageState extends ConsumerState<ProductsListPage> {
   }
 
   void _deleteProduct(Product product) {
-    // TODO: Implement product deletion
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Producto "${product.name}" eliminado'),
-        action: SnackBarAction(
-          label: 'Deshacer',
-          onPressed: () {
-            // TODO: Implement undo functionality
-          },
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Producto'),
+        content: Text(
+          '¿Estás seguro de que deseas eliminar "${product.name}"?\n\nEsta acción no se puede deshacer.',
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              
+              final productRepository = ref.read(productRepositoryProvider);
+              
+              // Mostrar indicador de carga
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Eliminando producto...'))
+              );
+              
+              // Eliminar el producto usando el repositorio
+              productRepository.deleteProduct(product.id)
+                .then((_) {
+                  // Invalidar los providers para refrescar la UI
+                  ref.invalidate(productsProvider);
+                  ref.invalidate(productCountProvider);
+                  ref.invalidate(lowStockProductsProvider);
+                  
+                  // Mostrar mensaje de éxito
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Producto eliminado con éxito'))
+                  );
+                })
+                .catchError((e) {
+                  // Mostrar mensaje de error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    )
+                  );
+                });
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
       ),
     );
   }
