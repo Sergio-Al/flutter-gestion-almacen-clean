@@ -190,7 +190,7 @@ final salesOrdersByDateRangeProvider = FutureProvider.family<List<SalesOrder>, (
 // Provider para actualizar el estado de un pedido
 final updateOrderStatusProvider = FutureProvider.family<bool, ({String orderId, OrderStatus newStatus})>((ref, params) async {
   final salesRepository = ref.watch(salesRepositoryProvider);
-  
+  print('actualizando estado del pedido: ${params.orderId} a ${params.newStatus}');
   try {
     // Obtener el pedido actual
     final order = await salesRepository.getSalesOrderById(params.orderId);
