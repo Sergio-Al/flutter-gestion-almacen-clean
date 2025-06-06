@@ -124,6 +124,7 @@ class StockLevelChart extends ConsumerWidget {
               final productId = entry.key;
               final stock = entry.value;
               final height = (stock / maxStock) * 150;
+              
 
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -151,14 +152,14 @@ class StockLevelChart extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 1),
 
                     // Product ID (truncated)
                     SizedBox(
                       width: 40,
                       child: Text(
                         productId.length > 8
-                            ? '${productId.substring(0, 8)}...'
+                            ? '${productId.substring(0, 6)}...'
                             : productId,
                         style: const TextStyle(fontSize: 10),
                         textAlign: TextAlign.center,
