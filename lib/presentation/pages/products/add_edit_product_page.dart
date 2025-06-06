@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gestion_almacen_stock/core/providers/category_providers.dart';
+import 'package:gestion_almacen_stock/core/providers/repository_providers.dart';
 import 'package:gestion_almacen_stock/domain/entities/category.dart';
 import 'package:gestion_almacen_stock/presentation/providers/product_providers.dart';
 import 'package:gestion_almacen_stock/presentation/widgets/category_selector_dialog.dart';
@@ -33,6 +34,7 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
   
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedImage;
+  bool _isLoading = false;
 
   bool get isEditing => widget.product != null;
   String? _imageUrl;
@@ -66,7 +68,7 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
     _categoryNameController = TextEditingController();
     if (product?.categoryId != null) {
       // Cargar el nombre de la categoría basado en el ID
-      ref.read(categoryByIdProvider(product!.categoryId!)).whenData((category) {
+      ref.read(categoryByIdProvider(product!.categoryId)).whenData((category) {
         if (category != null) {
           setState(() {
             _categoryNameController.text = category.name;
@@ -106,7 +108,7 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
         if (!isEditing) {
           _resetForm();
         }
-        ref.refresh(productCountProvider); // Refresh products list
+        final _ = ref.refresh(productCountProvider); // Refresh products list
         Navigator.pop(context, true); // Return true to indicate success
       }
 
@@ -542,6 +544,8 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
   }
 
   Widget _buildActionButtons(dynamic createState) {
+    final isLoadingState = isEditing ? _isLoading : createState.isLoading;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -560,7 +564,7 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
             Expanded(
               child: OutlinedButton(
                 onPressed:
-                    createState.isLoading ? null : () => Navigator.pop(context),
+                    isLoadingState ? null : () => Navigator.pop(context),
                 child: const Text('Cancelar'),
               ),
             ),
@@ -568,9 +572,9 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
             Expanded(
               flex: 2,
               child: ElevatedButton(
-                onPressed: createState.isLoading ? null : _submitForm,
+                onPressed: isLoadingState ? null : _submitForm,
                 child:
-                    createState.isLoading
+                    isLoadingState
                         ? const SizedBox(
                           height: 20,
                           width: 20,
@@ -615,10 +619,58 @@ class _AddEditProductPageState extends ConsumerState<AddEditProductPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     if (isEditing) {
-      // TODO: Implement update product functionality
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Actualización de producto próximamente')),
+      // Cambiar a estado de carga controlado por el estado local
+      setState(() {
+        _isLoading = true;
+      });
+      
+      final productRepository = ref.read(productRepositoryProvider);
+      
+      // Crear un objeto Product actualizado usando copyWith
+      final updatedProduct = widget.product!.copyWith(
+        sku: _skuController.text,
+        name: _nameController.text,
+        description: _descriptionController.text,
+        categoryId: _categoryIdController.text,
+        unitPrice: double.parse(_unitPriceController.text),
+        costPrice: double.parse(_costPriceController.text),
+        reorderPoint: int.parse(_reorderPointController.text),
+        updatedAt: DateTime.now(),
+        imageUrl: _imageUrl,
       );
+      
+      // Llamar al método updateProduct del repositorio
+      productRepository.updateProduct(updatedProduct)
+        .then((_) {
+          setState(() {
+            _isLoading = false;
+          });
+          
+          // Invalidar los caches para refrescar la UI
+          ref.invalidate(productsProvider);
+          ref.invalidate(productByIdProvider(widget.product!.id));
+          ref.invalidate(productCountProvider);
+          if (widget.product!.reorderPoint != updatedProduct.reorderPoint) {
+            ref.invalidate(lowStockProductsProvider);
+          }
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Producto actualizado con éxito')),
+          );
+          Navigator.pop(context, true); // Return true to indicate success
+        })
+        .catchError((e) {
+          setState(() {
+            _isLoading = false;
+          });
+                
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
     } else {
       // TODO: Implement image uploading logic and store imageUrl
       // For now we're just passing the local path
